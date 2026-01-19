@@ -1,5 +1,5 @@
 body{
-  background: radial-gradient(circle,#0f0f1a,#050508);
+  background:#050508;
   color:white;
   font-family:Segoe UI, sans-serif;
   text-align:center;
@@ -7,101 +7,67 @@ body{
 }
 
 h1{
-  font-size:3rem;
   color:#00ffcc;
-}
-
-.incoming{
-  font-size:1.6rem;
-  color:#ffcc00;
-  margin-bottom:20px;
+  margin:20px 0;
 }
 
 .tiles{
   display:flex;
   justify-content:center;
-  gap:50px;
-  margin-bottom:20px;
+  gap:60px;
+  margin-top:80px;
 }
 
 .tile{
-  position:relative;
-  width:220px;
-  padding:20px;
-  border-radius:20px;
+  width:260px;
+  height:160px;
   background:#111;
+  border-radius:25px;
   border:4px solid #333;
-}
-
-.tile img{
-  width:96px;
-}
-
-.fill-bar{
-  position:absolute;
-  bottom:0;
-  left:0;
-  width:0%;
-  height:6px;
-  background:#00ff00;
-  border-radius:0 0 20px 20px;
-}
-
-.alphabet{
-  font-size:6rem;
-  margin-top:40px;
-}
-
-.sentence{
-  font-size:3rem;
-  margin-top:20px;
-  min-height:50px;
-}
-
-.quick{
+  font-size:2rem;
   display:flex;
+  flex-direction:column;
   justify-content:center;
-  gap:40px;
-  margin-top:30px;
+  align-items:center;
 }
 
-.quickTile{
-  width:300px;
-  height:100px;
+.tile.active{
+  border-color:#00ff00;
+}
+
+.letterTile{
+  margin:40px auto;
+  width:260px;
+  height:260px;
   background:#111;
-  border-radius:20px;
-  border:4px solid #333;
-  font-size:3rem;
+  border:5px solid #00ffcc;
+  border-radius:30px;
+  font-size:10rem;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-footer{
+.sentence{
+  font-size:4rem;
   margin-top:30px;
-  font-size:1rem;
-  color:#888;
+  min-height:70px;
+  color:#ffcc00;
 }
 
-.topAction,.bottomAction{
-  font-size:1.8rem;
-  color:#00ffcc;
-  margin:15px 0;
-}
-
-.progressBar{
-  width:80%;
-  height:10px;
-  background:#222;
-  margin:20px auto;
-  border-radius:10px;
-}
-
-.progressBar div{
+.progress{
   width:0%;
-  height:100%;
+  height:8px;
   background:#00ff00;
   border-radius:10px;
+  margin-top:15px;
+  transition:width 0.1s linear;
+}
+
+.progress.big{
+  width:0%;
+  height:12px;
+  margin:20px auto;
 }
 
 #cameraCanvas{
@@ -110,5 +76,5 @@ footer{
   right:10px;
   width:320px;
   height:240px;
-  border:2px solid #fff;
+  border:2px solid white;
 }
