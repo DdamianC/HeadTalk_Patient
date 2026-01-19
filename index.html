@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<title>BCI – Pacjent</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="patient.css">
+  <meta charset="UTF-8">
+  <title>BCI – Pacjent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="patient.css">
 </head>
 <body>
 
 <!-- ================= MENU ================= -->
 <div id="menu">
   <h1>🧠 System Komunikacji BCI</h1>
-  <div id="incoming" class="incoming">Oczekiwanie na pytanie opiekuna...</div>
+  <div class="incoming">Oczekiwanie na pytanie opiekuna...</div>
+
   <div class="tiles">
     <div class="tile" id="left">
       <img src="https://img.icons8.com/fluency/96/abc.png">
       <p>ALFABET</p>
       <div class="fill-bar" id="leftBar"></div>
     </div>
+
     <div class="tile" id="right">
       <img src="https://img.icons8.com/fluency/96/checked.png">
       <p>TAK / NIE</p>
@@ -41,10 +43,12 @@
 <div id="yesnoView" hidden>
   <div class="topAction">⬆️ POWRÓT DO MENU</div>
   <div id="caregiverQuestion" class="question">Oczekiwanie na pytanie...</div>
+
   <div class="quick">
     <div class="quickTile" id="yesTile">TAK</div>
     <div class="quickTile" id="noTile">NIE</div>
   </div>
+
   <div class="bottomAction">⬇️ WYŚLIJ</div>
   <div class="progressBar">
     <div id="yesnoProgress"></div>
@@ -56,7 +60,7 @@
 <video id="video" autoplay muted playsinline style="display:none;"></video>
 
 <footer>
-Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
+  Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
@@ -65,4 +69,3 @@ Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
 
 </body>
 </html>
-
