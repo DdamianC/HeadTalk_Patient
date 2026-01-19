@@ -11,7 +11,7 @@ const rightBar = document.getElementById("rightBar");
 /* ================= STAN ================= */
 let neutralX = null;
 let lock = false;
-let currentView = "menu";
+let view = "menu";
 
 /* ================= FACE MESH ================= */
 const faceMesh = new FaceMesh({
@@ -25,7 +25,7 @@ faceMesh.setOptions({
   minTrackingConfidence: 0.7
 });
 
-/* ================= WYNIKI ================= */
+/* ================= OBSŁUGA WYNIKÓW ================= */
 faceMesh.onResults(results => {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -36,15 +36,13 @@ faceMesh.onResults(results => {
 
   const lm = results.multiFaceLandmarks[0];
 
-  // Rysowanie punktów
   lm.forEach(p => {
     ctx.beginPath();
-    ctx.arc(p.x * canvas.width, p.y * canvas.height, 2, 0, 2 * Math.PI);
+    ctx.arc(p.x * canvas.width, p.y * canvas.height, 2, 0, Math.PI * 2);
     ctx.fillStyle = "red";
     ctx.fill();
   });
 
-  // Detekcja ruchu głowy
   const nose = lm[1];
   const leftEye = lm[234];
   const rightEye = lm[454];
@@ -58,16 +56,16 @@ faceMesh.onResults(results => {
 
   const diffX = dx - neutralX;
 
-  const LEFT = -0.035;
-  const RIGHT = 0.035;
-
-  if (currentView === "menu") {
-    handleMenu(diffX, LEFT, RIGHT);
+  if (view === "menu") {
+    handleMenu(diffX);
   }
 });
 
 /* ================= MENU ================= */
-function handleMenu(diffX, LEFT, RIGHT) {
+function handleMenu(diffX) {
+
+  const LEFT = -0.035;
+  const RIGHT = 0.035;
 
   leftTile.classList.toggle("active", diffX < LEFT);
   rightTile.classList.toggle("active", diffX > RIGHT);
@@ -94,28 +92,28 @@ function fillBar(bar, callback) {
       clearInterval(interval);
       bar.style.width = "0%";
       lock = false;
-      callback();
+      callback(); // ⬅️ TU NASTĘPUJE WEJŚCIE DO PODSTRONY
     }
   }, 100);
 }
 
 /* ================= NAWIGACJA ================= */
 function enterAlphabet() {
-  currentView = "alphabet";
+  view = "alphabet";
   document.getElementById("menu").hidden = true;
   document.getElementById("alphabetView").hidden = false;
-  startAlphabet();
+  startAlphabet(); // z alphabet.js
 }
 
 function enterYesNo() {
-  currentView = "yesno";
+  view = "yesno";
   document.getElementById("menu").hidden = true;
   document.getElementById("yesnoView").hidden = false;
-  startYesNo();
+  startYesNo(); // z yesno.js
 }
 
 function backToMenu() {
-  currentView = "menu";
+  view = "menu";
   document.getElementById("menu").hidden = false;
   document.getElementById("alphabetView").hidden = true;
   document.getElementById("yesnoView").hidden = true;
