@@ -5,19 +5,27 @@ const ctx = canvas.getContext("2d");
 
 const menu = document.getElementById("menu");
 const alphabetView = document.getElementById("alphabetView");
+const yesnoView = document.getElementById("yesnoView");
 
 const tileAlphabet = document.getElementById("tileAlphabet");
 const tileYesNo = document.getElementById("tileYesNo");
-const menuProgressLeft = document.getElementById("menuProgressLeft");
-const menuProgressRight = document.getElementById("menuProgressRight");
+
+const menuLeft = document.getElementById("menuLeft");
+const menuRight = document.getElementById("menuRight");
 
 const letterTile = document.getElementById("letterTile");
 const alphabetProgress = document.getElementById("alphabetProgress");
 const sentenceEl = document.getElementById("sentence");
 
+const yesTile = document.getElementById("yesTile");
+const noTile = document.getElementById("noTile");
+const yesProgress = document.getElementById("yesProgress");
+const noProgress = document.getElementById("noProgress");
+
 // ===== STAN =====
 let view = "menu";
 let neutralX = null;
+let neutralY = null;
 let currentDir = "center";
 let timer = null;
 
@@ -27,32 +35,33 @@ let sentence = "";
 
 // ===== FACE MESH =====
 const faceMesh = new FaceMesh({
-  locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
 
 faceMesh.setOptions({
   maxNumFaces:1,
-  refineLandmarks:true,
-  minDetectionConfidence:0.7,
-  minTrackingConfidence:0.7
+  refineLandmarks:true
 });
 
-faceMesh.onResults(results=>{
-  ctx.save();
-  ctx.scale(-1,1);               // 🔴 ODBICIE LUSTRZANE
-  ctx.drawImage(results.image,-canvas.width,0,canvas.width,canvas.height);
-  ctx.restore();
+faceMesh.onResults(r=>{
+  ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+  if(!r.multiFaceLandmarks) return;
 
-  if(!results.multiFaceLandmarks) return;
-  const lm = results.multiFaceLandmarks[0];
-
+  const lm = r.multiFaceLandmarks[0];
   const nose = lm[1];
   const eyes = (lm[234].x + lm[454].x)/2;
+  const forehead = lm[10].y;
 
-  const dx = eyes - nose.x;      // 🔴 ODWROTNA LOGIKA
-  if(neutralX === null){ neutralX = dx; return; }
+  if(neutralX===null){
+    neutralX = eyes - nose.x;
+    neutralY = forehead;
+    return;
+  }
 
-  detect(dx - neutralX);
+  const dx = (eyes - nose.x) - neutralX;
+  const dy = forehead - neutralY;
+
+  detect(dx,dy);
 });
 
 // ===== KAMERA =====
@@ -67,40 +76,53 @@ navigator.mediaDevices.getUserMedia({
 });
 
 // ===== DETEKCJA =====
-function detect(x){
+function detect(x,y){
   let dir="center";
-  if(x > 0.05) dir="left";
-  else if(x < -0.05) dir="right";
+  if(x < -0.05) dir="left";
+  else if(x > 0.05) dir="right";
+  else if(y < -0.04) dir="up";
 
   if(dir!==currentDir){
     currentDir=dir;
-    resetTimers();
-    if(dir!=="center") startAction(dir);
+    reset();
+    if(dir!=="center") start(dir);
   }
 }
 
-function resetTimers(){
+function reset(){
   clearInterval(timer);
-  menuProgressLeft.style.width="0%";
-  menuProgressRight.style.width="0%";
-  alphabetProgress.style.width="0%";
-  tileAlphabet.classList.remove("active");
-  tileYesNo.classList.remove("active");
+  [menuLeft,menuRight,alphabetProgress,yesProgress,noProgress]
+    .forEach(p=>p.style.width="0%");
+  document.querySelectorAll(".tile").forEach(t=>t.classList.remove("active"));
 }
 
-function startAction(dir){
+function start(dir){
   if(view==="menu"){
     const tile = dir==="left"?tileAlphabet:tileYesNo;
-    const bar = dir==="left"?menuProgressLeft:menuProgressRight;
+    const bar = dir==="left"?menuLeft:menuRight;
     tile.classList.add("active");
-    fill(bar,2000,()=>enterAlphabet());
+    fill(bar,2000,()=>dir==="left"?openAlphabet():openYesNo());
   }
+
   if(view==="alphabet"){
     fill(alphabetProgress,1500,()=>{
-      if(dir==="right"){ sentence+=letters[letterIndex]; }
-      if(dir==="left"){ sentence=sentence.slice(0,-1); }
+      if(dir==="right") sentence+=letters[letterIndex];
+      if(dir==="left") sentence=sentence.slice(0,-1);
+      if(dir==="up") backToMenu();
       sentenceEl.innerText=sentence;
     });
+  }
+
+  if(view==="yesno"){
+    if(dir==="left"){
+      yesTile.classList.add("active");
+      fill(yesProgress,1500,()=>backToMenu());
+    }
+    if(dir==="right"){
+      noTile.classList.add("active");
+      fill(noProgress,1500,()=>backToMenu());
+    }
+    if(dir==="up") backToMenu();
   }
 }
 
@@ -118,11 +140,24 @@ function fill(bar,time,done){
 }
 
 // ===== WIDOKI =====
-function enterAlphabet(){
+function openAlphabet(){
   view="alphabet";
   menu.hidden=true;
   alphabetView.hidden=false;
   cycleLetters();
+}
+
+function openYesNo(){
+  view="yesno";
+  menu.hidden=true;
+  yesnoView.hidden=false;
+}
+
+function backToMenu(){
+  view="menu";
+  alphabetView.hidden=true;
+  yesnoView.hidden=true;
+  menu.hidden=false;
 }
 
 function cycleLetters(){
