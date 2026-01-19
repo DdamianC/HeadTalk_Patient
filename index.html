@@ -1,67 +1,40 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>BCI – Pacjent</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="patient.css">
+<meta charset="UTF-8">
+<title>BCI – Komunikacja</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="patient.css">
 </head>
+
 <body>
 
-<!-- ================= MENU ================= -->
+<h1>🧠 System Komunikacji BCI</h1>
+
+<!-- ===== MENU ===== -->
 <div id="menu">
-  <h1>🧠 System Komunikacji BCI</h1>
-  <div class="incoming">Oczekiwanie na pytanie opiekuna...</div>
-
   <div class="tiles">
-    <div class="tile" id="left">
-      <img src="https://img.icons8.com/fluency/96/abc.png">
+    <div class="tile" id="tileAlphabet">
       <p>ALFABET</p>
-      <div class="fill-bar" id="leftBar"></div>
+      <div class="progress" id="menuProgressLeft"></div>
     </div>
-
-    <div class="tile" id="right">
-      <img src="https://img.icons8.com/fluency/96/checked.png">
+    <div class="tile" id="tileYesNo">
       <p>TAK / NIE</p>
-      <div class="fill-bar" id="rightBar"></div>
+      <div class="progress" id="menuProgressRight"></div>
     </div>
   </div>
 </div>
 
-<!-- ================= ALFABET ================= -->
+<!-- ===== ALFABET ===== -->
 <div id="alphabetView" hidden>
-  <div class="topAction">⬆️ POWRÓT DO MENU</div>
-  <div id="alphabetGrid" class="alphabet"></div>
-  <div id="sentenceOutput" class="sentence"></div>
-  <div class="bottomAction">⬇️ WYŚLIJ</div>
-  <div class="progressBar">
-    <div id="alphabetProgress"></div>
-  </div>
+  <div class="letterTile" id="letterTile"></div>
+  <div class="progress big" id="alphabetProgress"></div>
+  <div class="sentence" id="sentence"></div>
 </div>
 
-<!-- ================= TAK / NIE ================= -->
-<div id="yesnoView" hidden>
-  <div class="topAction">⬆️ POWRÓT DO MENU</div>
-  <div id="caregiverQuestion" class="question">Oczekiwanie na pytanie...</div>
-
-  <div class="quick">
-    <div class="quickTile" id="yesTile">TAK</div>
-    <div class="quickTile" id="noTile">NIE</div>
-  </div>
-
-  <div class="bottomAction">⬇️ WYŚLIJ</div>
-  <div class="progressBar">
-    <div id="yesnoProgress"></div>
-  </div>
-</div>
-
-<!-- ================= KAMERA ================= -->
+<!-- ===== KAMERA ===== -->
 <canvas id="cameraCanvas" width="640" height="480"></canvas>
-<video id="video" autoplay muted playsinline style="display:none;"></video>
-
-<footer>
-  Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
-</footer>
+<video id="video" autoplay muted playsinline hidden></video>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
