@@ -118,3 +118,25 @@ footer{
   font-size:1rem;
   color:#888;
 }
+
+
+.topAction, .bottomAction{
+  font-size:1.8rem;
+  color:#00ffcc;
+  margin:15px 0;
+}
+
+.progressBar{
+  width:80%;
+  height:10px;
+  background:#222;
+  margin:20px auto;
+  border-radius:10px;
+}
+
+.progressBar div{
+  width:0%;
+  height:100%;
+  background:#00ff00;
+  border-radius:10px;
+}
