@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<title>BCI – Pacjent</title>
-<link rel="stylesheet" href="patient.css">
+  <meta charset="UTF-8">
+  <title>BCI – Pacjent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="patient.css">
 </head>
+
 <body>
 
+<!-- ================= MENU ================= -->
 <div id="menu">
+
   <h1>🧠 System Komunikacji BCI</h1>
-  <div id="incoming" class="incoming">Oczekiwanie na pytanie opiekuna...</div>
+
+  <div id="incoming" class="incoming">
+    Oczekiwanie na pytanie opiekuna...
+  </div>
 
   <div class="tiles">
+
     <div class="tile" id="left">
       <img src="https://img.icons8.com/fluency/96/abc.png"/>
       <p>ALFABET</p>
@@ -23,41 +32,25 @@
       <p>TAK / NIE</p>
       <div class="fill-bar" id="rightBar"></div>
     </div>
+
   </div>
 
-  <!-- CANVAS DO PUNKTÓW TWARZY -->
-  <canvas id="menuCanvas" width="640" height="480" style="margin-top:20px; border:2px solid #fff;"></canvas>
-  <p class="hint">⬅️ głowa w lewo • ➡️ głowa w prawo • ⬆️ głowa do góry = powrót</p>
+  <canvas id="menuCanvas" width="640" height="480"></canvas>
+
+  <p class="hint">
+    ⬅️ głowa w lewo • ➡️ głowa w prawo • ⬆️ głowa do góry = powrót
+  </p>
+
 </div>
-
-<div id="app" hidden>
-  <h2 id="modeLabel"></h2>
-  <div id="question" class="question"></div>
-  <div id="alphabet" class="alphabet"></div>
-  <div id="sentence" class="sentence"></div>
-</div>
-
-<video id="video" autoplay muted playsinline style="display:none;"></video>
-
-<footer>
-Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="patient.js"></script>
-</body>
-</html>
-
 
 <!-- ================= ALFABET ================= -->
 <div id="alphabetView" hidden>
 
-  <div class="topAction">⬆️ POWRÓT</div>
+  <div class="topAction">⬆️ POWRÓT DO MENU</div>
 
   <div id="alphabetGrid" class="alphabet"></div>
 
-  <div class="sentence" id="sentenceOutput"></div>
+  <div id="sentenceOutput" class="sentence"></div>
 
   <div class="bottomAction">⬇️ WYŚLIJ</div>
 
@@ -70,9 +63,9 @@ Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
 <!-- ================= TAK / NIE ================= -->
 <div id="yesnoView" hidden>
 
-  <div class="topAction">⬆️ POWRÓT</div>
+  <div class="topAction">⬆️ POWRÓT DO MENU</div>
 
-  <div class="question" id="caregiverQuestion">
+  <div id="caregiverQuestion" class="question">
     Oczekiwanie na pytanie...
   </div>
 
@@ -89,7 +82,20 @@ Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
 
 </div>
 
+<!-- ================= VIDEO (UKRYTE) ================= -->
+<video id="video" autoplay muted playsinline style="display:none;"></video>
+
+<footer>
+  Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
+</footer>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script src="patient.js"></script>
 <script src="alphabet.js"></script>
 <script src="yesno.js"></script>
+
+</body>
+</html>
