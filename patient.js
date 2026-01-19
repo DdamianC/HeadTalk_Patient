@@ -66,8 +66,8 @@ faceMesh.onResults(results => {
 /* ================= MENU ================= */
 function handleMenu(diffX) {
 
-  const LEFT = -0.035;
-  const RIGHT = 0.035;
+  const LEFT = -0.06;
+  const RIGHT = 0.06;
 
   leftTile.classList.toggle("active", diffX < LEFT);
   rightTile.classList.toggle("active", diffX > RIGHT);
