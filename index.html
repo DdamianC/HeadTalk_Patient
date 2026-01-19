@@ -4,14 +4,12 @@
   <meta charset="UTF-8">
   <title>BCI – Pacjent</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="stylesheet" href="patient.css">
 </head>
 <body>
 
 <!-- ================= MENU ================= -->
 <div id="menu">
-
   <h1>🧠 System Komunikacji BCI</h1>
 
   <div id="incoming" class="incoming">
@@ -19,7 +17,6 @@
   </div>
 
   <div class="tiles">
-
     <div class="tile" id="left">
       <img src="https://img.icons8.com/fluency/96/abc.png">
       <p>ALFABET</p>
@@ -31,21 +28,18 @@
       <p>TAK / NIE</p>
       <div class="fill-bar" id="rightBar"></div>
     </div>
-
   </div>
 
   <canvas id="menuCanvas" width="640" height="480"></canvas>
 
-  <p class="hint">
-    ⬅️ LEWO • ➡️ PRAWO • ⬆️ POWRÓT
-  </p>
-
+  <p class="hint">⬅️ LEWO • ➡️ PRAWO • ⬆️ POWRÓT</p>
 </div>
 
 <!-- ================= ALFABET ================= -->
 <div id="alphabetView" hidden>
-
   <div class="topAction">⬆️ POWRÓT DO MENU</div>
+
+  <canvas id="alphabetCamera" width="640" height="480"></canvas>
 
   <div id="alphabetGrid" class="alphabet"></div>
 
@@ -53,32 +47,7 @@
 
   <div class="bottomAction">⬇️ WYŚLIJ</div>
 
-  <div class="progressBar">
-    <div id="alphabetProgress"></div>
-  </div>
-
-</div>
-
-<!-- ================= TAK / NIE ================= -->
-<div id="yesnoView" hidden>
-
-  <div class="topAction">⬆️ POWRÓT DO MENU</div>
-
-  <div id="caregiverQuestion" class="question">
-    Oczekiwanie na pytanie...
-  </div>
-
-  <div class="quick">
-    <div class="quickTile" id="yesTile">TAK</div>
-    <div class="quickTile" id="noTile">NIE</div>
-  </div>
-
-  <div class="bottomAction">⬇️ WYŚLIJ</div>
-
-  <div class="progressBar">
-    <div id="yesnoProgress"></div>
-  </div>
-
+  <div class="progressBar"><div id="alphabetProgress"></div></div>
 </div>
 
 <video id="video" autoplay muted playsinline style="display:none;"></video>
@@ -87,13 +56,11 @@
   Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
 </footer>
 
-<!-- ================= SCRIPTS ================= -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
-<script src="patient.js"></script>
-<script src="alphabet.js"></script>
-<script src="yesno.js"></script>
+<script src="patient.js?v=1"></script>
+<script src="alphabet.js?v=1"></script>
 
 </body>
 </html>
