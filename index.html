@@ -27,6 +27,11 @@
 
 <!-- ===== ALFABET ===== -->
 <div id="alphabetView" hidden>
+  <div class="tile back" id="backFromAlphabet">
+    ⬆ POWRÓT DO MENU
+    <div class="progress" id="backProgress"></div>
+  </div>
+
   <div class="letterTile" id="letterTile"></div>
   <div class="progress big" id="alphabetProgress"></div>
   <div class="sentence" id="sentence"></div>
@@ -34,9 +39,11 @@
 
 <!-- ===== TAK / NIE ===== -->
 <div id="yesnoView" hidden>
-  <div class="question" id="question">
-    Czy czujesz się dobrze?
+  <div class="tile back">
+    ⬆ POWRÓT DO MENU
   </div>
+
+  <div class="question">Czy czujesz się dobrze?</div>
 
   <div class="tiles">
     <div class="tile" id="yesTile">
@@ -50,7 +57,6 @@
   </div>
 </div>
 
-<!-- ===== KAMERA ===== -->
 <canvas id="cameraCanvas" width="640" height="480"></canvas>
 <video id="video" autoplay muted playsinline hidden></video>
 
