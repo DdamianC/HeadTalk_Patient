@@ -6,31 +6,27 @@ body{
   text-align:center;
 }
 
-h1{
-  margin:20px 0;
-  color:#00ffd5;
-}
+h1{ color:#00ffd5; }
 
 .tiles{
   display:flex;
   justify-content:center;
   gap:60px;
-  margin-top:80px;
+  margin-top:60px;
 }
 
 .tile{
   width:260px;
   height:160px;
   border-radius:25px;
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(12px);
-  border:3px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(10px);
+  border:3px solid rgba(255,255,255,0.25);
   font-size:2rem;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  transition:0.3s;
 }
 
 .tile.active{
@@ -38,28 +34,28 @@ h1{
   box-shadow:0 0 25px #00ff00;
 }
 
+.tile.back{
+  width:340px;
+  height:80px;
+  margin:30px auto;
+  font-size:1.8rem;
+}
+
 .letterTile{
-  margin:50px auto;
+  margin:40px auto;
   width:260px;
   height:260px;
-  background:rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.18);
   border-radius:30px;
   font-size:10rem;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 0 30px rgba(0,255,255,0.4);
 }
 
 .sentence{
   font-size:4rem;
-  margin-top:30px;
   color:#ffeb3b;
-}
-
-.question{
-  font-size:3rem;
-  margin-top:60px;
 }
 
 .progress{
@@ -67,14 +63,10 @@ h1{
   height:8px;
   background:#00ff00;
   border-radius:10px;
-  margin-top:15px;
+  margin-top:10px;
 }
 
-.progress.big{
-  height:12px;
-  width:0%;
-  margin:30px auto;
-}
+.progress.big{ height:12px; }
 
 #cameraCanvas{
   position:fixed;
