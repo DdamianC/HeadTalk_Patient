@@ -1,3 +1,5 @@
+alert("NOWA WERSJA PATIENT.JS");
+
 /* ================= ELEMENTY ================= */
 const video = document.getElementById("video");
 const canvas = document.getElementById("menuCanvas");
