@@ -9,18 +9,18 @@
 
 <body>
 
-<h1>🧠 System Komunikacji BCI</h1>
+<h1>🧠 BCI Communication System</h1>
 
 <!-- ===== MENU ===== -->
 <div id="menu">
   <div class="tiles">
     <div class="tile" id="tileAlphabet">
-      <p>ALFABET</p>
-      <div class="progress" id="menuProgressLeft"></div>
+      ALFABET
+      <div class="progress" id="menuLeft"></div>
     </div>
     <div class="tile" id="tileYesNo">
-      <p>TAK / NIE</p>
-      <div class="progress" id="menuProgressRight"></div>
+      TAK / NIE
+      <div class="progress" id="menuRight"></div>
     </div>
   </div>
 </div>
@@ -30,6 +30,24 @@
   <div class="letterTile" id="letterTile"></div>
   <div class="progress big" id="alphabetProgress"></div>
   <div class="sentence" id="sentence"></div>
+</div>
+
+<!-- ===== TAK / NIE ===== -->
+<div id="yesnoView" hidden>
+  <div class="question" id="question">
+    Czy czujesz się dobrze?
+  </div>
+
+  <div class="tiles">
+    <div class="tile" id="yesTile">
+      TAK
+      <div class="progress" id="yesProgress"></div>
+    </div>
+    <div class="tile" id="noTile">
+      NIE
+      <div class="progress" id="noProgress"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== KAMERA ===== -->
