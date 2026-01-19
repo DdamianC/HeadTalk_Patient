@@ -1,4 +1,3 @@
-// ===== ELEMENTY =====
 const video = document.getElementById("video");
 const canvas = document.getElementById("cameraCanvas");
 const ctx = canvas.getContext("2d");
@@ -16,13 +15,13 @@ const menuRight = document.getElementById("menuRight");
 const letterTile = document.getElementById("letterTile");
 const alphabetProgress = document.getElementById("alphabetProgress");
 const sentenceEl = document.getElementById("sentence");
+const backProgress = document.getElementById("backProgress");
 
 const yesTile = document.getElementById("yesTile");
 const noTile = document.getElementById("noTile");
 const yesProgress = document.getElementById("yesProgress");
 const noProgress = document.getElementById("noProgress");
 
-// ===== STAN =====
 let view = "menu";
 let neutralX = null;
 let neutralY = null;
@@ -40,11 +39,18 @@ const faceMesh = new FaceMesh({
 
 faceMesh.setOptions({
   maxNumFaces:1,
-  refineLandmarks:true
+  refineLandmarks:false,
+  minDetectionConfidence:0.7,
+  minTrackingConfidence:0.7
 });
 
 faceMesh.onResults(r=>{
-  ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+  // ✅ PRAWDZIWE ODBICIE LUSTRZANE
+  ctx.save();
+  ctx.scale(-1,1);
+  ctx.drawImage(r.image,-canvas.width,0,canvas.width,canvas.height);
+  ctx.restore();
+
   if(!r.multiFaceLandmarks) return;
 
   const lm = r.multiFaceLandmarks[0];
@@ -58,19 +64,17 @@ faceMesh.onResults(r=>{
     return;
   }
 
-  const dx = (eyes - nose.x) - neutralX;
-  const dy = forehead - neutralY;
-
-  detect(dx,dy);
+  detect((eyes - nose.x) - neutralX, forehead - neutralY);
 });
 
-// ===== KAMERA =====
+// ===== KAMERA (OPTYMALNA) =====
 navigator.mediaDevices.getUserMedia({
-  video:{facingMode:"user",width:640,height:480}
+  video:{facingMode:"user",width:480,height:360}
 }).then(stream=>{
   video.srcObject = stream;
   const cam = new Camera(video,{
-    onFrame: async()=>await faceMesh.send({image:video})
+    onFrame: async()=>await faceMesh.send({image:video}),
+    fps:15
   });
   cam.start();
 });
@@ -91,8 +95,7 @@ function detect(x,y){
 
 function reset(){
   clearInterval(timer);
-  [menuLeft,menuRight,alphabetProgress,yesProgress,noProgress]
-    .forEach(p=>p.style.width="0%");
+  document.querySelectorAll(".progress").forEach(p=>p.style.width="0%");
   document.querySelectorAll(".tile").forEach(t=>t.classList.remove("active"));
 }
 
@@ -105,24 +108,21 @@ function start(dir){
   }
 
   if(view==="alphabet"){
+    if(dir==="up"){
+      fill(backProgress,1500,backToMenu);
+      return;
+    }
     fill(alphabetProgress,1500,()=>{
       if(dir==="right") sentence+=letters[letterIndex];
       if(dir==="left") sentence=sentence.slice(0,-1);
-      if(dir==="up") backToMenu();
       sentenceEl.innerText=sentence;
     });
   }
 
   if(view==="yesno"){
-    if(dir==="left"){
-      yesTile.classList.add("active");
-      fill(yesProgress,1500,()=>backToMenu());
-    }
-    if(dir==="right"){
-      noTile.classList.add("active");
-      fill(noProgress,1500,()=>backToMenu());
-    }
     if(dir==="up") backToMenu();
+    if(dir==="left") fill(yesProgress,1500,backToMenu);
+    if(dir==="right") fill(noProgress,1500,backToMenu);
   }
 }
 
