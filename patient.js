@@ -1,134 +1,108 @@
-alert("NOWA WERSJA PATIENT.JS");
-
-/* ================= ELEMENTY ================= */
+// ================= ELEMENTY =================
 const video = document.getElementById("video");
-const canvas = document.getElementById("menuCanvas");
-const ctx = canvas.getContext("2d");
+const menuCanvas = document.getElementById("menuCanvas");
+const menuCtx = menuCanvas.getContext("2d");
 
 const leftTile = document.getElementById("left");
 const rightTile = document.getElementById("right");
 const leftBar = document.getElementById("leftBar");
 const rightBar = document.getElementById("rightBar");
 
-/* ================= STAN ================= */
 let neutralX = null;
 let lock = false;
 let view = "menu";
 
-/* ================= FACE MESH ================= */
+// ================= FACE MESH =================
 const faceMesh = new FaceMesh({
   locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
 
 faceMesh.setOptions({
-  maxNumFaces: 1,
-  refineLandmarks: true,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
+  maxNumFaces:1,
+  refineLandmarks:true,
+  minDetectionConfidence:0.7,
+  minTrackingConfidence:0.7
 });
 
-/* ================= OBSŁUGA WYNIKÓW ================= */
-faceMesh.onResults(results => {
+// ================= WYNIKI =================
+faceMesh.onResults(results=>{
+  menuCtx.clearRect(0,0,menuCanvas.width,menuCanvas.height);
+  if(!results.multiFaceLandmarks) return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (!results.multiFaceLandmarks) return;
-
-  ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-
+  menuCtx.drawImage(results.image,0,0,menuCanvas.width,menuCanvas.height);
   const lm = results.multiFaceLandmarks[0];
-
-  lm.forEach(p => {
-    ctx.beginPath();
-    ctx.arc(p.x * canvas.width, p.y * canvas.height, 2, 0, Math.PI * 2);
-    ctx.fillStyle = "red";
-    ctx.fill();
+  lm.forEach(p=>{
+    menuCtx.beginPath();
+    menuCtx.arc(p.x*menuCanvas.width, p.y*menuCanvas.height,2,0,2*Math.PI);
+    menuCtx.fillStyle="red";
+    menuCtx.fill();
   });
 
-  const nose = lm[1];
-  const leftEye = lm[234];
-  const rightEye = lm[454];
+  const nose = lm[1], leftEye = lm[234], rightEye = lm[454];
+  const dx = nose.x - (leftEye.x + rightEye.x)/2;
+  const dy = nose.y - (leftEye.y + rightEye.y)/2;
 
-  const dx = nose.x - (leftEye.x + rightEye.x) / 2;
+  if(neutralX===null){ neutralX=dx; return; }
 
-  if (neutralX === null) {
-    neutralX = dx;
-    return;
-  }
+  const diffX = dx-neutralX;
+  const diffY = dy; // jeśli chcesz góra/dół
 
-  const diffX = dx - neutralX;
-
-  if (view === "menu") {
-    handleMenu(diffX);
-  }
+  if(view==="menu") handleMenu(diffX);
 });
 
-/* ================= MENU ================= */
-function handleMenu(diffX) {
+function handleMenu(diffX){
+  const LEFT = -0.06;   // mocne w lewo
+  const RIGHT = 0.06;   // mocne w prawo
 
-  const LEFT = -0.06;
-  const RIGHT = 0.06;
+  leftTile.classList.toggle("active", diffX<LEFT);
+  rightTile.classList.toggle("active", diffX>RIGHT);
 
-  leftTile.classList.toggle("active", diffX < LEFT);
-  rightTile.classList.toggle("active", diffX > RIGHT);
-
-  if (diffX < LEFT && !lock) {
-    fillBar(leftBar, enterAlphabet);
-  }
-
-  if (diffX > RIGHT && !lock) {
-    fillBar(rightBar, enterYesNo);
-  }
+  if(diffX<LEFT && !lock) fillBar(leftBar, enterAlphabet);
+  if(diffX>RIGHT && !lock) fillBar(rightBar, enterYesNo);
 }
 
-/* ================= PASEK POSTĘPU ================= */
-function fillBar(bar, callback) {
-  lock = true;
-  let width = 0;
-
-  const interval = setInterval(() => {
-    width += 5;
-    bar.style.width = width + "%";
-
-    if (width >= 100) {
+// ================= PASEK =================
+function fillBar(bar,callback){
+  lock=true;
+  let width=0;
+  const interval = setInterval(()=>{
+    width+=5;
+    bar.style.width = width+"%";
+    if(width>=100){
       clearInterval(interval);
-      bar.style.width = "0%";
-      lock = false;
-      callback(); // ⬅️ TU NASTĘPUJE WEJŚCIE DO PODSTRONY
+      bar.style.width="0%";
+      lock=false;
+      callback();
     }
-  }, 100);
+  },100);
 }
 
-/* ================= NAWIGACJA ================= */
-function enterAlphabet() {
-  view = "alphabet";
-  document.getElementById("menu").hidden = true;
-  document.getElementById("alphabetView").hidden = false;
-  startAlphabet(); // z alphabet.js
+// ================= NAWIGACJA =================
+function enterAlphabet(){
+  view="alphabet";
+  document.getElementById("menu").hidden=true;
+  document.getElementById("alphabetView").hidden=false;
+  if(typeof startAlphabet==="function") startAlphabet();
 }
 
-function enterYesNo() {
-  view = "yesno";
-  document.getElementById("menu").hidden = true;
-  document.getElementById("yesnoView").hidden = false;
-  startYesNo(); // z yesno.js
+function enterYesNo(){
+  view="yesno";
+  document.getElementById("menu").hidden=true;
+  // tutaj możesz załączyć startYesNo();
 }
 
-function backToMenu() {
-  view = "menu";
-  document.getElementById("menu").hidden = false;
-  document.getElementById("alphabetView").hidden = true;
-  document.getElementById("yesnoView").hidden = true;
+function backToMenu(){
+  view="menu";
+  document.getElementById("menu").hidden=false;
+  document.getElementById("alphabetView").hidden=true;
+  document.getElementById("yesnoView").hidden=true;
 }
 
-/* ================= KAMERA ================= */
-const camera = new Camera(video, {
-  onFrame: async () => {
-    await faceMesh.send({ image: video });
-  },
-  width: 640,
-  height: 480,
-  fps: 30
+// ================= KAMERA =================
+const camera = new Camera(video,{
+  onFrame: async()=>await faceMesh.send({image:video}),
+  width:640,
+  height:480,
+  fps:30
 });
-
 camera.start();
