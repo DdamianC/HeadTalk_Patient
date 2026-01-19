@@ -1,26 +1,31 @@
-// ================= ELEMENTY =================
+// ===== ELEMENTY =====
 const video = document.getElementById("video");
 const canvas = document.getElementById("cameraCanvas");
 const ctx = canvas.getContext("2d");
 
-const alphabetGrid = document.getElementById("alphabetGrid");
-const sentenceOutput = document.getElementById("sentenceOutput");
+const menu = document.getElementById("menu");
+const alphabetView = document.getElementById("alphabetView");
+
+const tileAlphabet = document.getElementById("tileAlphabet");
+const tileYesNo = document.getElementById("tileYesNo");
+const menuProgressLeft = document.getElementById("menuProgressLeft");
+const menuProgressRight = document.getElementById("menuProgressRight");
+
+const letterTile = document.getElementById("letterTile");
 const alphabetProgress = document.getElementById("alphabetProgress");
+const sentenceEl = document.getElementById("sentence");
 
-const yesnoProgress = document.getElementById("yesnoProgress");
-
-// ================= STAN =================
+// ===== STAN =====
 let view = "menu";
 let neutralX = null;
-let headDirection = "center";
-let headTimer = null;
+let currentDir = "center";
+let timer = null;
 
-let letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-let index = 0;
+const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+let letterIndex = 0;
 let sentence = "";
-let lock = false;
 
-// ================= FACE MESH =================
+// ===== FACE MESH =====
 const faceMesh = new FaceMesh({
   locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
@@ -32,131 +37,99 @@ faceMesh.setOptions({
   minTrackingConfidence:0.7
 });
 
-faceMesh.onResults(results => {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(!results.multiFaceLandmarks) return;
+faceMesh.onResults(results=>{
+  ctx.save();
+  ctx.scale(-1,1);               // 🔴 ODBICIE LUSTRZANE
+  ctx.drawImage(results.image,-canvas.width,0,canvas.width,canvas.height);
+  ctx.restore();
 
-  ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
+  if(!results.multiFaceLandmarks) return;
   const lm = results.multiFaceLandmarks[0];
 
   const nose = lm[1];
-  const leftEye = lm[234];
-  const rightEye = lm[454];
+  const eyes = (lm[234].x + lm[454].x)/2;
 
-  const dx = nose.x - (leftEye.x + rightEye.x)/2;
-  const dy = nose.y - 0.5;
+  const dx = eyes - nose.x;      // 🔴 ODWROTNA LOGIKA
+  if(neutralX === null){ neutralX = dx; return; }
 
-  if(neutralX === null){
-    neutralX = dx;
-    return;
-  }
-
-  detectDirection(dx - neutralX, dy);
+  detect(dx - neutralX);
 });
 
-// ================= KAMERA LAPTOPA =================
+// ===== KAMERA =====
 navigator.mediaDevices.getUserMedia({
-  video:{
-    facingMode:"user",
-    width:640,
-    height:480
-  },
-  audio:false
+  video:{facingMode:"user",width:640,height:480}
 }).then(stream=>{
   video.srcObject = stream;
-  video.play();
-
-  const camera = new Camera(video,{
-    onFrame: async()=>{
-      await faceMesh.send({image:video});
-    },
-    width:640,
-    height:480
+  const cam = new Camera(video,{
+    onFrame: async()=>await faceMesh.send({image:video})
   });
-
-  camera.start();
+  cam.start();
 });
 
-// ================= LOGIKA GŁOWY =================
-function detectDirection(x,y){
-  let dir = "center";
-  if(x < -0.06) dir="left";
-  else if(x > 0.06) dir="right";
-  else if(y < -0.05) dir="up";
+// ===== DETEKCJA =====
+function detect(x){
+  let dir="center";
+  if(x > 0.05) dir="left";
+  else if(x < -0.05) dir="right";
 
-  if(dir !== headDirection){
-    headDirection = dir;
-    clearTimeout(headTimer);
-    if(dir !== "center"){
-      headTimer = setTimeout(()=>action(dir),4000);
+  if(dir!==currentDir){
+    currentDir=dir;
+    resetTimers();
+    if(dir!=="center") startAction(dir);
+  }
+}
+
+function resetTimers(){
+  clearInterval(timer);
+  menuProgressLeft.style.width="0%";
+  menuProgressRight.style.width="0%";
+  alphabetProgress.style.width="0%";
+  tileAlphabet.classList.remove("active");
+  tileYesNo.classList.remove("active");
+}
+
+function startAction(dir){
+  if(view==="menu"){
+    const tile = dir==="left"?tileAlphabet:tileYesNo;
+    const bar = dir==="left"?menuProgressLeft:menuProgressRight;
+    tile.classList.add("active");
+    fill(bar,2000,()=>enterAlphabet());
+  }
+  if(view==="alphabet"){
+    fill(alphabetProgress,1500,()=>{
+      if(dir==="right"){ sentence+=letters[letterIndex]; }
+      if(dir==="left"){ sentence=sentence.slice(0,-1); }
+      sentenceEl.innerText=sentence;
+    });
+  }
+}
+
+function fill(bar,time,done){
+  let w=0;
+  timer=setInterval(()=>{
+    w+=100/(time/100);
+    bar.style.width=w+"%";
+    if(w>=100){
+      clearInterval(timer);
+      bar.style.width="0%";
+      done();
     }
-  }
+  },100);
 }
 
-function action(dir){
-  if(view === "menu"){
-    if(dir==="left") openAlphabet();
-  }
-  else if(view === "alphabet"){
-    if(dir==="left") addLetter();
-    if(dir==="right") removeLetter();
-    if(dir==="up") backToMenu();
-  }
-}
-
-// ================= WIDOKI =================
-function openAlphabet(){
+// ===== WIDOKI =====
+function enterAlphabet(){
   view="alphabet";
-  document.getElementById("menu").hidden=true;
-  document.getElementById("alphabetView").hidden=false;
+  menu.hidden=true;
+  alphabetView.hidden=false;
   cycleLetters();
 }
 
-function backToMenu(){
-  view="menu";
-  document.getElementById("menu").hidden=false;
-  document.getElementById("alphabetView").hidden=true;
-}
-
-// ================= ALFABET =================
 function cycleLetters(){
-  alphabetGrid.innerText = letters[index];
+  letterTile.innerText=letters[letterIndex];
   setTimeout(()=>{
-    index = (index+1)%letters.length;
-    if(view==="alphabet") cycleLetters();
-  },4000);
-}
-
-function addLetter(){
-  if(lock) return;
-  lock=true;
-  let w=0;
-  const i=setInterval(()=>{
-    w+=5;
-    alphabetProgress.style.width=w+"%";
-    if(w>=100){
-      clearInterval(i);
-      sentence+=letters[index];
-      sentenceOutput.innerText=sentence;
-      alphabetProgress.style.width="0%";
-      lock=false;
-    }
-  },100);
-}
-
-function removeLetter(){
-  if(lock) return;
-  lock=true;
-  let w=0;
-  const i=setInterval(()=>{
-    w+=5;
-    alphabetProgress.style.width=w+"%";
-    if(w>=100){
-      clearInterval(i);
-      sentence=sentence.slice(0,-1);
-      sentenceOutput.innerText=sentence;
-      alphabetProgress.style.width="0%";
-      lock=false;
-    }
-  },100);
+    if(view!=="alphabet") return;
+    letterIndex=(letterIndex+1)%letters.length;
+    cycleLetters();
+  },3000);
 }
