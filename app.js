@@ -5,10 +5,20 @@ const needs = [
     {t: "Książka", i: "📖"}, {t: "Sen", i: "😴"}
 ];
 
-let state = { view: 'menu', dir: 'center', dwell: 0, sentence: "", alphaIdx: 0, needIdx: 0 };
+let state = { 
+    view: 'menu', 
+    dir: 'center', 
+    dwell: 0, 
+    sentence: "", 
+    alphaIdx: 0, 
+    needIdx: 0,
+    entryTime: 0 // licznik pauzy po wejściu
+};
+
 let alphaTimer = 0;
-const ALPHA_CHANGE_TIME = 40; 
-const DWELL_REQ = 25; 
+const START_DELAY = 60;    // 6 sekund pauzy na start (60 * 100ms)
+const CHANGE_TIME = 40;    // 4 sekundy na zmianę elementu
+const DWELL_REQ = 25;      // czas przytrzymania głowy dla akcji
 
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -45,7 +55,6 @@ function execute(dir) {
     } 
     else if (state.view === 'alpha') {
         if (dir === 'up') { setView('menu'); return; } 
-        
         if (dir === 'left') {
             state.sentence += letters[state.alphaIdx];
             alphaTimer = 0;
@@ -71,12 +80,12 @@ function execute(dir) {
 
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-    const target = document.getElementById(`view-${v}`);
-    if(target) target.classList.add('active');
+    document.getElementById(`view-${v}`).classList.add('active');
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
-    alphaTimer = 0;
+    state.entryTime = 0; // Resetuj pauzę 6s
+    alphaTimer = 0;      // Resetuj licznik 4s
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
 }
 
@@ -87,7 +96,7 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     
-    // 1. RYSOWANIE LUSTRZANE (Wizualne)
+    // 1. RYSOWANIE LUSTRZANE (WIZUALNE)
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(-1, 1);
@@ -98,23 +107,21 @@ faceMesh.onResults(res => {
     if(!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
 
     const landmarks = res.multiFaceLandmarks[0];
-    const leftEye = landmarks[33];  // Oko lewe (z perspektywy kamery)
-    const rightEye = landmarks[263]; // Oko prawe (z perspektywy kamery)
+    const leftEye = landmarks[33];   
+    const rightEye = landmarks[263]; 
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // 2. LOGIKA RUCHU (Zsynchronizowana z lustrem)
-    // Gdy przechylasz głowę w swoje LEWO, odległość Y oczu zmienia się.
-    const eyeDiffY = leftEye.y - rightEye.y; 
+    // 2. LOGIKA RUCHU (TWOJE LEWO = LEWA OPCJA)
+    // Przy lustrzanym odbiciu eyeDiffY musi być obliczane tak:
+    const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
-    // Czułość pionowa (Góra/Dół)
-    if (nose.y < forehead.y + 0.085) move = 'up'; 
-    else if (nose.y > forehead.y + 0.18) move = 'down';
-    // Czułość pozioma (Lewo/Prawo)
-    else if (eyeDiffY < -0.042) move = 'left'; 
-    else if (eyeDiffY > 0.042) move = 'right';
+    if (nose.y < forehead.y + 0.08) move = 'up'; 
+    else if (nose.y > forehead.y + 0.19) move = 'down';
+    else if (eyeDiffY > 0.045) move = 'left';  // Skręt w lewo użytkownika
+    else if (eyeDiffY < -0.045) move = 'right'; // Skręt w prawo użytkownika
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -132,8 +139,6 @@ faceMesh.onResults(res => {
 
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
-    
-    // Resetuj paski akcji
     document.querySelectorAll('.progress:not(.auto-progress-bar)').forEach(b => b.style.width = '0%');
     
     if (state.view === 'menu') {
@@ -141,24 +146,17 @@ function updateUI(move) {
         if(bar) bar.style.width = p + '%';
     } 
     else if (state.view === 'alpha') {
-        // Paski w widoku alfabetu
-        const barUp = document.getElementById('bar-up-alpha');
-        const barDown = document.getElementById('bar-down-alpha');
-        const barLeft = document.getElementById('bar-left-alpha');
-        const barRight = document.getElementById('bar-right-alpha');
+        if (move !== 'center') {
+            let bar = document.getElementById(`bar-${move}-alpha`);
+            if(bar) bar.style.width = p + '%';
+        }
 
-        if (move === 'up' && barUp) barUp.style.width = p + '%';
-        if (move === 'down' && barDown) barDown.style.width = p + '%';
-        if (move === 'left' && barLeft) barLeft.style.width = p + '%';
-        if (move === 'right' && barRight) barRight.style.width = p + '%';
-
-        // 3. POMARAŃCZOWY PASEK (Zmiana litery)
         const autoBar = document.getElementById('auto-letter-bar');
         if (autoBar) {
-            const timePercent = (alphaTimer / ALPHA_CHANGE_TIME) * 100;
-            autoBar.style.width = timePercent + '%';
+            // Pasek postępu pokazuje czas do zmiany (pomarańczowy)
+            const timePercent = (alphaTimer / CHANGE_TIME) * 100;
+            autoBar.style.width = (state.entryTime < START_DELAY) ? '0%' : timePercent + '%';
         }
-        
         document.getElementById('sentence').innerText = state.sentence || "---";
     } 
     else if (state.view === 'needs') {
@@ -167,24 +165,35 @@ function updateUI(move) {
     }
 }
 
-// Pętla odliczania alfabetu
+// GŁÓWNA PĘTLA CZASOWA (100ms)
 setInterval(() => {
-    if (state.view === 'alpha') {
-        // Odliczanie działa tylko gdy głowa jest prosto
-        if (state.dir === 'center') {
+    // 3. LOGIKA PAUZY I ZMIANY ELEMENTÓW
+    if (state.view === 'alpha' || state.view === 'needs') {
+        
+        // Czekaj 6 sekund po wejściu
+        if (state.entryTime < START_DELAY) {
+            state.entryTime++;
+            return;
+        }
+
+        // Zmieniaj tylko jeśli głowa jest prosto (dir === 'center')
+        // Jeśli użytkownik zaczyna wybierać (dwell > 0), czas się zatrzymuje
+        if (state.dir === 'center' && state.dwell === 0) {
             alphaTimer++;
-            if (alphaTimer >= ALPHA_CHANGE_TIME) {
-                state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-                const curLetEl = document.getElementById('cur-let');
-                if(curLetEl) curLetEl.innerText = letters[state.alphaIdx];
+            
+            if (alphaTimer >= CHANGE_TIME) {
+                if (state.view === 'alpha') {
+                    state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+                    document.getElementById('cur-let').innerText = letters[state.alphaIdx];
+                } else {
+                    state.needIdx = (state.needIdx + 1) % needs.length;
+                    document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
+                    const activeItem = document.getElementById(`n-${state.needIdx}`);
+                    if(activeItem) activeItem.classList.add('active');
+                }
                 alphaTimer = 0;
             }
         }
-    } else if (state.view === 'needs') {
-        state.needIdx = (state.needIdx + 1) % needs.length;
-        document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-        const activeItem = document.getElementById(`n-${state.needIdx}`);
-        if(activeItem) activeItem.classList.add('active');
     }
 }, 100);
 
