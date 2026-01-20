@@ -1,87 +1,18 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>HeadTalk BCI - Damian Cybula</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="dashboard">
-        <aside class="sidebar">
-            <div class="brand">BCI MENU</div>
-            <div class="msg-label">KOMUNIKAT:</div>
-            <div id="final-output" class="final-text">Oczekiwanie...</div>
-            <div class="camera-card">
-                <canvas id="cameraCanvas"></canvas>
-            </div>
-            <div class="status-indicator">
-                <span class="dot"></span> System Aktywny
-            </div>
-        </aside>
-
-        <main class="stage">
-            <h1 class="main-title">System komunikacji</h1>
-
-            <section id="view-menu" class="view active">
-                <div class="tile tile-long alarm">
-                    <div class="tile-content">⬆ ALARM</div>
-                    <div class="progress" id="bar-up-menu"></div>
-                </div>
-                <div class="tile-grid">
-                    <div class="tile tile-sq">
-                        <div class="tile-content">
-                            <h2>ALFABET</h2>
-                            <span class="icon">⬅</span>
-                        </div>
-                        <div class="progress" id="bar-left-menu"></div>
-                    </div>
-                    <div class="tile tile-sq">
-                        <div class="tile-content">
-                            <h2>WYBÓR</h2>
-                            <span class="icon">➡</span>
-                        </div>
-                        <div class="progress" id="bar-right-menu"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="view-alpha" class="view">
-                <div class="tile tile-long menu-back">
-                    <div class="tile-content">⬆ POWRÓT DO MENU</div>
-                    <div class="progress" id="bar-up-alpha"></div>
-                </div>
-
-                <div class="alpha-main">
-                    <div class="letter-container">
-                        <div class="letter-box" id="cur-let">A</div>
-                        <div class="next-letter-progress" id="next-letter-bar"></div>
-                        <div class="action-progress-bar" id="action-bar"></div>
-                    </div>
-                    
-                    <div class="sentence-box" id="sentence">---</div>
-                    <div class="progress" id="bar-down-alpha"></div>
-                </div>
-                <div class="nav-hint">⬅ Dodaj (Zielony) | ➡ Usuń (Czerwony) | ⬇ WYŚLIJ</div>
-            </section>
-
-            <section id="view-needs" class="view">
-                <div class="tile tile-long menu-back">
-                    <div class="tile-content">⬆ POWRÓT DO MENU</div>
-                    <div class="progress" id="bar-up-needs"></div>
-                </div>
-                <div class="needs-container" id="needs-grid"></div>
-                <div class="progress" id="bar-left-needs"></div>
-                <div class="nav-hint">⬅ WYBIERZ</div>
-            </section>
-
-            <footer class="footer">Damian Cybula | Inżynieria Biomedyczna 2026</footer>
-        </main>
+<section id="view-alpha" class="view">
+    <div class="tile tile-long menu-back">
+        <div class="tile-content">⬆ POWRÓT DO MENU</div>
+        <div class="progress" id="bar-up-alpha"></div>
     </div>
 
-    <video id="video" style="display:none;" autoplay muted playsinline></video>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="app.js"></script>
-</body>
-</html>
+    <div class="alpha-main">
+        <div class="letter-container">
+            <div class="letter-box" id="cur-let">A</div>
+            <div class="next-letter-progress" id="next-letter-bar"></div>
+            <div class="action-progress-bar" id="action-bar"></div>
+        </div>
+        
+        <div class="sentence-box" id="sentence">---</div>
+        <div class="progress" id="bar-down-alpha" style="height:4px; opacity:0.5;"></div>
+    </div>
+    <div class="nav-hint">⬅ Dodaj | ➡ Usuń | ⬇ WYŚLIJ | ⬆ POWRÓT</div>
+</section>
