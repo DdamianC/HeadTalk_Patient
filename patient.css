@@ -1,79 +1,74 @@
 body{
-  margin:0;
-  font-family:Segoe UI, sans-serif;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:white;
-  text-align:center;
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+text-align:center;
 }
 
-h1{ color:#00ffd5; }
+#statusBar{
+display:flex;
+justify-content:space-between;
+padding:10px 30px;
+background:rgba(0,0,0,.4);
+}
 
 .tiles{
-  display:flex;
-  justify-content:center;
-  gap:60px;
-  margin-top:60px;
+display:flex;
+justify-content:center;
+gap:60px;
+margin-top:50px;
 }
 
 .tile{
-  width:260px;
-  height:160px;
-  border-radius:25px;
-  background:rgba(255,255,255,0.12);
-  backdrop-filter:blur(10px);
-  border:3px solid rgba(255,255,255,0.25);
-  font-size:2rem;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+width:260px;height:160px;
+background:rgba(255,255,255,.15);
+border-radius:25px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:2rem;
 }
 
 .tile.active{
-  border-color:#00ff00;
-  box-shadow:0 0 25px #00ff00;
-}
-
-.tile.back{
-  width:340px;
-  height:80px;
-  margin:30px auto;
-  font-size:1.8rem;
+box-shadow:0 0 30px #00ff88;
 }
 
 .letterTile{
-  margin:40px auto;
-  width:260px;
-  height:260px;
-  background:rgba(255,255,255,0.18);
-  border-radius:30px;
-  font-size:10rem;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+margin:30px auto;
+width:220px;height:220px;
+border-radius:30px;
+background:rgba(255,255,255,.2);
+font-size:9rem;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
-.sentence{
-  font-size:4rem;
-  color:#ffeb3b;
+.sentenceBox{
+width:70%;
+margin:20px auto;
+padding:20px;
+background:rgba(0,0,0,.5);
+border-radius:20px;
+font-size:3rem;
+color:#ffeb3b;
 }
 
-.progress{
-  width:0%;
-  height:8px;
-  background:#00ff00;
-  border-radius:10px;
-  margin-top:10px;
+.cursor{animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0}}
+
+#camCanvas{
+position:fixed;
+bottom:20px;
+right:20px;
+border-radius:15px;
+border:2px solid white;
 }
 
-.progress.big{ height:12px; }
-
-#cameraCanvas{
-  position:fixed;
-  bottom:10px;
-  right:10px;
-  width:320px;
-  height:240px;
-  border-radius:15px;
-  border:2px solid white;
+footer{
+position:fixed;
+bottom:0;width:100%;
+padding:10px;
+background:rgba(0,0,0,.4);
 }
