@@ -15,7 +15,7 @@ let state = {
     entryTime: 0 
 };
 
-let alphaTimer = 0;
+let autoTimer = 0; // Wspólny timer dla alfabetu i potrzeb
 const START_DELAY = 60;    // 6 sekund (60 * 100ms)
 const CHANGE_TIME = 40;    // 4 sekundy (40 * 100ms)
 const DWELL_REQ = 25;      
@@ -55,8 +55,13 @@ function execute(dir) {
     } 
     else if (state.view === 'alpha') {
         if (dir === 'up') { setView('menu'); return; } 
-        if (dir === 'left') { state.sentence += letters[state.alphaIdx]; alphaTimer = 0; }
-        if (dir === 'right') { state.sentence = state.sentence.slice(0, -1); alphaTimer = 0; }
+        if (dir === 'left') { 
+            const char = letters[state.alphaIdx];
+            if(char === "<-") state.sentence = state.sentence.slice(0, -1);
+            else state.sentence += char;
+            autoTimer = 0; 
+        }
+        if (dir === 'right') { state.sentence = state.sentence.slice(0, -1); autoTimer = 0; }
         if (dir === 'down') {
             document.getElementById('final-output').innerText = state.sentence;
             state.sentence = "";
@@ -64,7 +69,7 @@ function execute(dir) {
         }
     } 
     else if (state.view === 'needs') {
-        if (dir === 'up') setView('menu');
+        if (dir === 'up') { setView('menu'); return; }
         if (dir === 'left') {
             document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
@@ -78,8 +83,8 @@ function setView(v) {
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
-    state.entryTime = 0; // Reset pauzy 6s
-    alphaTimer = 0;      // Reset timera 4s
+    state.entryTime = 0; 
+    autoTimer = 0;      
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
 }
 
@@ -90,7 +95,6 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     
-    // RYSOWANIE LUSTRZANE
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(-1, 1);
@@ -106,15 +110,15 @@ faceMesh.onResults(res => {
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // POPRAWIONA LOGIKA LUSTRZANA (Twoje lewo = lewa strona)
+    // POPRAWKA 1: Odwrócone sterowanie (Lustrzane dopasowanie)
     const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
     if (nose.y < forehead.y + 0.08) move = 'up'; 
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    else if (eyeDiffY > 0.045) move = 'left';  
-    else if (eyeDiffY < -0.045) move = 'right'; 
+    else if (eyeDiffY < -0.045) move = 'left';  // Zmienione znaki < / >
+    else if (eyeDiffY > 0.045) move = 'right'; 
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -143,45 +147,43 @@ function updateUI(move) {
             let bar = document.getElementById(`bar-${move}-alpha`);
             if(bar) bar.style.width = p + '%';
         }
-
         const autoBar = document.getElementById('auto-letter-bar');
         if (autoBar) {
-            const timePercent = (alphaTimer / CHANGE_TIME) * 100;
-            // Pasek rośnie tylko po upływie 6s pauzy startowej
+            const timePercent = (autoTimer / CHANGE_TIME) * 100;
             autoBar.style.width = (state.entryTime < START_DELAY) ? '0%' : timePercent + '%';
         }
         document.getElementById('sentence').innerText = state.sentence || "---";
+        document.getElementById('cur-let').innerText = letters[state.alphaIdx];
     } 
     else if (state.view === 'needs') {
         if (move === 'left') document.getElementById('bar-left-needs').style.width = p + '%';
         if (move === 'up') document.getElementById('bar-up-needs').style.width = p + '%';
+        
+        // Podświetlenie aktywnego kafelka potrzeb
+        document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
+        const activeItem = document.getElementById(`n-${state.needIdx}`);
+        if(activeItem) activeItem.classList.add('active');
     }
 }
 
-// PĘTLA CZASOWA
+// PĘTLA CZASOWA (Logika zmiany liter i potrzeb)
 setInterval(() => {
     if (state.view === 'alpha' || state.view === 'needs') {
-        // 1. Pauza 6s na start
         if (state.entryTime < START_DELAY) {
             state.entryTime++;
             return;
         }
 
-        // 2. Zmiana co 4s (tylko gdy głowa prosto i brak wyboru w toku)
         if (state.dir === 'center' && state.dwell === 0) {
-            alphaTimer++;
+            autoTimer++;
             
-            if (alphaTimer >= CHANGE_TIME) {
+            if (autoTimer >= CHANGE_TIME) {
                 if (state.view === 'alpha') {
                     state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-                    document.getElementById('cur-let').innerText = letters[state.alphaIdx];
-                } else {
+                } else if (state.view === 'needs') {
                     state.needIdx = (state.needIdx + 1) % needs.length;
-                    document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-                    const activeItem = document.getElementById(`n-${state.needIdx}`);
-                    if(activeItem) activeItem.classList.add('active');
                 }
-                alphaTimer = 0;
+                autoTimer = 0;
             }
         }
     }
