@@ -77,7 +77,7 @@ function setView(v) {
     if (v === 'needs') highlightNeed();
 }
 
-/* ================= EXECUTE ================= */
+/* ================= EXECUTE (POPRAWIONA MECHANIKA) ================= */
 
 function execute(dir) {
     if (state.view === 'menu') {
@@ -85,14 +85,18 @@ function execute(dir) {
             document.getElementById('final-output').innerText = "!!! ALARM !!!";
             playAlarm();
         }
-        if (dir === 'left') setView('alpha');
-        if (dir === 'right') setView('needs');
+        if (dir === 'left') setView('alpha');  // Menu: Lewo -> Alfabet
+        if (dir === 'right') setView('needs'); // Menu: Prawo -> Potrzeby
     }
 
     else if (state.view === 'alpha') {
         if (dir === 'up') return setView('menu');
-        if (dir === 'left') state.sentence += letters[state.alphaIdx];
-        if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
+        if (dir === 'left') { // Alfabet: Lewo -> Dodaj
+            state.sentence += letters[state.alphaIdx];
+        }
+        if (dir === 'right') { // Alfabet: Prawo -> Usuń
+            state.sentence = state.sentence.slice(0, -1);
+        }
         if (dir === 'down') {
             document.getElementById('final-output').innerText = state.sentence;
             state.sentence = "";
@@ -102,10 +106,13 @@ function execute(dir) {
 
     else if (state.view === 'needs') {
         if (dir === 'up') setView('menu');
-        if (dir === 'left') {
+        if (dir === 'left') { // Potrzeby: Lewo -> Wybierz kafelek
             document.getElementById('final-output').innerText =
                 "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
+        }
+        if (dir === 'right') { // Potrzeby: Prawo -> Usuń/Cofnij
+            document.getElementById('final-output').innerText = "Oczekiwanie...";
         }
     }
 }
@@ -151,7 +158,7 @@ faceMesh.onResults(res => {
     } else if (nose.y > forehead.y + 0.19) {
         move = 'down';
     } 
-    // POPRAWKA: Zamieniono warunki < i > dla osi X
+    // Detekcja lewo/prawo (zgodnie z Twoim widokiem)
     else if (nose.x > faceCenterX + 0.02) {
         move = 'left'; 
     } else if (nose.x < faceCenterX - 0.02) {
