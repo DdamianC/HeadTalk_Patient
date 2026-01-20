@@ -17,38 +17,28 @@ let state = {
     entryTime: 0
 };
 
-let alphaTimer = 0;
+let autoTimer = 0;
 
 const START_DELAY = 60;
-const CHANGE_TIME = 40;
+const CHANGE_TIME = 30; // szybciej dla potrzeb
 const DWELL_REQ = 25;
 
-function playAlarm() {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(600, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.4);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.8);
-}
+/* ================== POTRZEBY ================== */
 
 function initNeeds() {
-    const grid = document.getElementById('needs-grid');
-    grid.innerHTML = '';
+    const g = document.getElementById('needs-grid');
+    g.innerHTML = '';
     needs.forEach((n, i) => {
         const d = document.createElement('div');
         d.className = 'need-item';
         d.id = `n-${i}`;
         d.innerHTML = `<div style="font-size:2.5rem">${n.i}</div>${n.t}`;
-        grid.appendChild(d);
+        g.appendChild(d);
     });
 }
 initNeeds();
+
+/* ================== AKCJE ================== */
 
 function execute(dir) {
     if (state.view === 'menu') {
@@ -58,19 +48,13 @@ function execute(dir) {
     }
 
     else if (state.view === 'alpha') {
-        if (dir === 'up') return setView('menu');
+        if (dir === 'up') setView('menu');
         if (dir === 'left') state.sentence += letters[state.alphaIdx];
         if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
-        if (dir === 'down') {
-            document.getElementById('final-output').innerText = state.sentence;
-            state.sentence = "";
-            setView('menu');
-        }
     }
 
     else if (state.view === 'needs') {
         if (dir === 'up') setView('menu');
-
         if (dir === 'left') {
             document.getElementById('final-output').innerText =
                 "POTRZEBA: " + needs[state.needIdx].t;
@@ -79,26 +63,22 @@ function execute(dir) {
     }
 }
 
+/* ================== WIDOK ================== */
+
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${v}`).classList.add('active');
+
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
     state.entryTime = 0;
-    alphaTimer = 0;
+    autoTimer = 0;
 
-    if (v === 'alpha') {
-        document.getElementById('cur-let').innerText = letters[state.alphaIdx];
-    }
-
-    if (v === 'needs') {
-        document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-        document.getElementById(`n-${state.needIdx}`).classList.add('active');
-    }
+    if (v === 'needs') highlightNeed();
 }
 
-/* ================= FACE TRACKING ================= */
+/* ================== FACE ================== */
 
 const faceMesh = new FaceMesh({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
@@ -111,6 +91,19 @@ faceMesh.setOptions({
 });
 
 faceMesh.onResults(res => {
+    const canvas = document.getElementById('cameraCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 640;
+    canvas.height = 480;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.translate(-canvas.width, 0);
+    ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
     if (!res.multiFaceLandmarks?.length) return;
 
     const lm = res.multiFaceLandmarks[0];
@@ -121,12 +114,12 @@ faceMesh.onResults(res => {
 
     let move = 'center';
 
-    const eyeDiffY = leftEye.y - rightEye.y; // ⬅️ ODWRÓCONE
+    const eyeDiff = rightEye.y - leftEye.y; // ✔ poprawny kierunek
 
     if (nose.y < forehead.y + 0.08) move = 'up';
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    else if (eyeDiffY > 0.045) move = 'left';
-    else if (eyeDiffY < -0.045) move = 'right';
+    else if (eyeDiff > 0.045) move = 'left';
+    else if (eyeDiff < -0.045) move = 'right';
 
     if (move === state.dir && move !== 'center') state.dwell++;
     else {
@@ -142,26 +135,21 @@ faceMesh.onResults(res => {
     updateUI(move);
 });
 
-/* ================= UI ================= */
+/* ================== UI ================== */
 
 function updateUI(move) {
     document.querySelectorAll('.progress').forEach(p => p.style.width = '0%');
-    const pct = (state.dwell / DWELL_REQ) * 100;
-
+    const p = (state.dwell / DWELL_REQ) * 100;
     const bar = document.getElementById(`bar-${move}-${state.view}`);
-    if (bar) bar.style.width = pct + '%';
+    if (bar) bar.style.width = p + '%';
 
     if (state.view === 'alpha') {
-        document.getElementById('sentence').innerText = state.sentence || "---";
         document.getElementById('cur-let').innerText = letters[state.alphaIdx];
-        const auto = document.getElementById('auto-letter-bar');
-        auto.style.width =
-            state.entryTime < START_DELAY ? '0%' :
-            (alphaTimer / CHANGE_TIME) * 100 + '%';
+        document.getElementById('sentence').innerText = state.sentence || "---";
     }
 }
 
-/* ================= TIMER ================= */
+/* ================== AUTO LOOP ================== */
 
 setInterval(() => {
     if (!['alpha', 'needs'].includes(state.view)) return;
@@ -171,12 +159,10 @@ setInterval(() => {
         return;
     }
 
-    if (state.dir !== 'center') return;
+    autoTimer++;
 
-    alphaTimer++;
-
-    if (alphaTimer >= CHANGE_TIME) {
-        alphaTimer = 0;
+    if (autoTimer >= CHANGE_TIME) {
+        autoTimer = 0;
 
         if (state.view === 'alpha') {
             state.alphaIdx = (state.alphaIdx + 1) % letters.length;
@@ -184,15 +170,34 @@ setInterval(() => {
 
         if (state.view === 'needs') {
             state.needIdx = (state.needIdx + 1) % needs.length;
-            document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-            document.getElementById(`n-${state.needIdx}`).classList.add('active');
+            highlightNeed();
         }
     }
 }, 100);
 
-/* ================= CAMERA ================= */
+/* ================== HELPERS ================== */
 
-const cam = new Camera(document.getElementById('video'), {
+function highlightNeed() {
+    document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
+    document.getElementById(`n-${state.needIdx}`)?.classList.add('active');
+}
+
+function playAlarm() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = 900;
+    g.gain.value = 0.3;
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.8);
+}
+
+/* ================== CAMERA ================== */
+
+const cam = new Camera(video, {
     onFrame: async () => await faceMesh.send({ image: video }),
     width: 640,
     height: 480
