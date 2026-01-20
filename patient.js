@@ -1,8 +1,15 @@
 const DB="https://bci-komunikacja-default-rtdb.europe-west1.firebasedatabase.app";
 
 const letters=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-let li=0, sentence="", view="menu";
-let neutralX=null, neutralY=null, current="center";
+let letterIndex=0;
+let sentence="";
+let view="menu";
+
+let neutralX=null;
+let neutralY=null;
+let currentDir="center";
+let dwell=0;
+const DWELL_TIME=20;
 
 const video=document.getElementById("video");
 const canvas=document.getElementById("camCanvas");
@@ -11,31 +18,48 @@ const ctx=canvas.getContext("2d");
 const letterTile=document.getElementById("letterTile");
 const sentenceEl=document.getElementById("sentence");
 
-function setMode(m){
- document.getElementById("modeLabel").innerText="TRYB: "+m;
-}
-
-/* ===== MEDIA PIPE ===== */
+/* ===== MEDIAPIPE ===== */
 const faceMesh=new FaceMesh({
  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
 
-faceMesh.setOptions({maxNumFaces:1,minDetectionConfidence:.7});
-faceMesh.onResults(r=>{
- if(!r.multiFaceLandmarks)return;
+faceMesh.setOptions({maxNumFaces:1,minDetectionConfidence:0.7});
 
- ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
- sendFrame();
+faceMesh.onResults(r=>{
+ ctx.save();
+ ctx.scale(-1,1);
+ ctx.drawImage(r.image,-canvas.width,0,canvas.width,canvas.height);
+ ctx.restore();
+
+ if(!r.multiFaceLandmarks){
+  document.getElementById("trackLabel").innerText="🔴 BRAK TWARZY";
+  neutralX=null;
+  return;
+ }
+
+ document.getElementById("trackLabel").innerText="🟢 TRACKING";
 
  const lm=r.multiFaceLandmarks[0];
+
+ lm.forEach(p=>{
+  ctx.beginPath();
+  ctx.arc(p.x*canvas.width,p.y*canvas.height,1.5,0,2*Math.PI);
+  ctx.fillStyle="#00ff88";
+  ctx.fill();
+ });
+
  const nose=lm[1].x;
  const eyes=(lm[234].x+lm[454].x)/2;
- const y=lm[10].y;
+ const forehead=lm[10].y;
 
- if(neutralX===null){neutralX=eyes-nose;neutralY=y;return;}
+ if(neutralX===null){
+  neutralX=eyes-nose;
+  neutralY=forehead;
+  return;
+ }
 
  const dx=(eyes-nose)-neutralX;
- const dy=y-neutralY;
+ const dy=forehead-neutralY;
 
  let dir="center";
  if(dx<-0.05)dir="left";
@@ -43,13 +67,24 @@ faceMesh.onResults(r=>{
  else if(dy>0.04)dir="down";
  else if(dy<-0.04)dir="up";
 
- if(dir!==current){
-  current=dir;
-  handle(dir);
+ if(dir===currentDir){
+  dwell++;
+ }else{
+  dwell=0;
+  currentDir=dir;
+  resetProgress();
  }
+
+ if(dwell>DWELL_TIME){
+  trigger(dir);
+  dwell=0;
+  resetProgress();
+ }
+
+ updateProgress(dwell/DWELL_TIME*100);
 });
 
-/* ===== KAMERA ===== */
+/* ===== CAMERA ===== */
 navigator.mediaDevices.getUserMedia({video:{width:320,height:240}})
 .then(s=>{
  video.srcObject=s;
@@ -60,8 +95,23 @@ navigator.mediaDevices.getUserMedia({video:{width:320,height:240}})
  cam.start();
 });
 
-/* ===== LOGIKA ===== */
-function handle(dir){
+/* ===== UI ===== */
+function resetProgress(){
+ document.querySelectorAll(".progress").forEach(p=>p.style.width="0%");
+}
+
+function updateProgress(p){
+ if(view==="menu"){
+  if(currentDir==="left") document.getElementById("progAlphabet").style.width=p+"%";
+  if(currentDir==="right") document.getElementById("progYesNo").style.width=p+"%";
+ }
+ if(view==="yesno"){
+  if(currentDir==="left") document.getElementById("progYes").style.width=p+"%";
+  if(currentDir==="right") document.getElementById("progNo").style.width=p+"%";
+ }
+}
+
+function trigger(dir){
  if(view==="menu"){
   if(dir==="left") openAlphabet();
   if(dir==="right") openYesNo();
@@ -82,35 +132,35 @@ function handle(dir){
  }
 }
 
-function cycle(){
- if(view!=="alphabet")return;
- letterTile.innerText=letters[li];
- li=(li+1)%letters.length;
- setTimeout(cycle,2000);
-}
-
 function openAlphabet(){
- view="alphabet"; setMode("ALFABET");
+ view="alphabet";
  document.getElementById("menu").hidden=true;
  document.getElementById("alphabetView").hidden=false;
- cycle();
+ cycleLetters();
 }
 
 function openYesNo(){
- view="yesno"; setMode("TAK / NIE");
+ view="yesno";
  document.getElementById("menu").hidden=true;
  document.getElementById("yesnoView").hidden=false;
 }
 
 function backToMenu(){
- view="menu"; setMode("MENU");
+ view="menu";
  document.getElementById("menu").hidden=false;
  document.getElementById("alphabetView").hidden=true;
  document.getElementById("yesnoView").hidden=true;
 }
 
-/* ===== FIREBASE ===== */
+function cycleLetters(){
+ if(view!=="alphabet")return;
+ letterTile.innerText=letters[letterIndex];
+ letterIndex=(letterIndex+1)%letters.length;
+ setTimeout(cycleLetters,2000);
+}
+
 function sendSentence(){
+ if(!sentence)return;
  fetch(`${DB}/messages.json`,{
   method:"POST",
   body:JSON.stringify({text:sentence,time:Date.now()})
@@ -127,20 +177,3 @@ function sendAnswer(v){
  });
  backToMenu();
 }
-
-/* ===== KAMERA STREAM ===== */
-function sendFrame(){
- const img=canvas.toDataURL("image/jpeg",0.4);
- fetch(`${DB}/camera/current.json`,{
-  method:"PUT",
-  body:JSON.stringify({img,time:Date.now()})
- });
-}
-
-/* ===== PYTANIA ===== */
-async function loadQ(){
- const r=await fetch(`${DB}/questions/current.json`);
- const d=await r.json();
- if(d) document.getElementById("questionText").innerText=d.text;
-}
-setInterval(loadQ,2000);
