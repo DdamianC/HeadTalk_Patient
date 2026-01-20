@@ -12,13 +12,13 @@ let state = {
     sentence: "", 
     alphaIdx: 0, 
     needIdx: 0,
-    entryTime: 0 // licznik pauzy po wejściu
+    entryTime: 0 
 };
 
 let alphaTimer = 0;
-const START_DELAY = 60;    // 6 sekund pauzy na start (60 * 100ms)
-const CHANGE_TIME = 40;    // 4 sekundy na zmianę elementu
-const DWELL_REQ = 25;      // czas przytrzymania głowy dla akcji
+const START_DELAY = 60;    // 6 sekund (60 * 100ms)
+const CHANGE_TIME = 40;    // 4 sekundy (40 * 100ms)
+const DWELL_REQ = 25;      
 
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -55,14 +55,8 @@ function execute(dir) {
     } 
     else if (state.view === 'alpha') {
         if (dir === 'up') { setView('menu'); return; } 
-        if (dir === 'left') {
-            state.sentence += letters[state.alphaIdx];
-            alphaTimer = 0;
-        }
-        if (dir === 'right') {
-            state.sentence = state.sentence.slice(0, -1);
-            alphaTimer = 0;
-        }
+        if (dir === 'left') { state.sentence += letters[state.alphaIdx]; alphaTimer = 0; }
+        if (dir === 'right') { state.sentence = state.sentence.slice(0, -1); alphaTimer = 0; }
         if (dir === 'down') {
             document.getElementById('final-output').innerText = state.sentence;
             state.sentence = "";
@@ -84,8 +78,8 @@ function setView(v) {
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
-    state.entryTime = 0; // Resetuj pauzę 6s
-    alphaTimer = 0;      // Resetuj licznik 4s
+    state.entryTime = 0; // Reset pauzy 6s
+    alphaTimer = 0;      // Reset timera 4s
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
 }
 
@@ -96,7 +90,7 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     
-    // 1. RYSOWANIE LUSTRZANE (WIZUALNE)
+    // RYSOWANIE LUSTRZANE
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(-1, 1);
@@ -112,16 +106,15 @@ faceMesh.onResults(res => {
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // 2. LOGIKA RUCHU (TWOJE LEWO = LEWA OPCJA)
-    // Przy lustrzanym odbiciu eyeDiffY musi być obliczane tak:
+    // POPRAWIONA LOGIKA LUSTRZANA (Twoje lewo = lewa strona)
     const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
     if (nose.y < forehead.y + 0.08) move = 'up'; 
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    else if (eyeDiffY > 0.045) move = 'left';  // Skręt w lewo użytkownika
-    else if (eyeDiffY < -0.045) move = 'right'; // Skręt w prawo użytkownika
+    else if (eyeDiffY > 0.045) move = 'left';  
+    else if (eyeDiffY < -0.045) move = 'right'; 
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -153,8 +146,8 @@ function updateUI(move) {
 
         const autoBar = document.getElementById('auto-letter-bar');
         if (autoBar) {
-            // Pasek postępu pokazuje czas do zmiany (pomarańczowy)
             const timePercent = (alphaTimer / CHANGE_TIME) * 100;
+            // Pasek rośnie tylko po upływie 6s pauzy startowej
             autoBar.style.width = (state.entryTime < START_DELAY) ? '0%' : timePercent + '%';
         }
         document.getElementById('sentence').innerText = state.sentence || "---";
@@ -165,19 +158,16 @@ function updateUI(move) {
     }
 }
 
-// GŁÓWNA PĘTLA CZASOWA (100ms)
+// PĘTLA CZASOWA
 setInterval(() => {
-    // 3. LOGIKA PAUZY I ZMIANY ELEMENTÓW
     if (state.view === 'alpha' || state.view === 'needs') {
-        
-        // Czekaj 6 sekund po wejściu
+        // 1. Pauza 6s na start
         if (state.entryTime < START_DELAY) {
             state.entryTime++;
             return;
         }
 
-        // Zmieniaj tylko jeśli głowa jest prosto (dir === 'center')
-        // Jeśli użytkownik zaczyna wybierać (dwell > 0), czas się zatrzymuje
+        // 2. Zmiana co 4s (tylko gdy głowa prosto i brak wyboru w toku)
         if (state.dir === 'center' && state.dwell === 0) {
             alphaTimer++;
             
