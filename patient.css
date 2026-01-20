@@ -1,6 +1,6 @@
 body{
 margin:0;
-font-family:Segoe UI;
+font-family:Segoe UI, sans-serif;
 background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
 text-align:center;
@@ -9,15 +9,16 @@ text-align:center;
 header{
 display:flex;
 justify-content:space-between;
+align-items:center;
 padding:15px 30px;
-background:rgba(0,0,0,.4);
+background:rgba(0,0,0,.45);
 }
 
 .tiles{
 display:flex;
 justify-content:center;
 gap:60px;
-margin:40px;
+margin-top:50px;
 }
 
 .tile{
@@ -40,23 +41,37 @@ left:0;
 width:0%;
 height:100%;
 background:rgba(0,255,120,.35);
+transition:width .1s linear;
 }
 
 .tile.alarm{
-margin:0 auto;
-width:400px;
-background:rgba(255,0,0,.3);
+margin:40px auto;
+width:420px;
+background:rgba(255,0,0,.25);
+}
+
+#alphabet{
+margin-top:30px;
 }
 
 #letter{
 font-size:9rem;
-margin:30px;
+margin:20px;
 }
 
 #sentence{
 font-size:3rem;
 color:#ffeb3b;
-min-height:80px;
+min-height:70px;
+}
+
+.nav{
+margin:15px auto;
+width:300px;
+padding:15px;
+border-radius:20px;
+background:rgba(255,255,255,.12);
+font-size:1.5rem;
 }
 
 .grid{
@@ -71,12 +86,17 @@ height:120px;
 font-size:1.4rem;
 }
 
+.hint{
+opacity:.8;
+margin-bottom:20px;
+}
+
 #cam{
 position:fixed;
 bottom:20px;
 right:20px;
-border:2px solid white;
 border-radius:15px;
+border:2px solid white;
 transform:scaleX(-1);
 }
 
@@ -86,4 +106,5 @@ bottom:0;
 width:100%;
 padding:10px;
 background:rgba(0,0,0,.4);
+font-size:.9rem;
 }
