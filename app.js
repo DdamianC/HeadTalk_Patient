@@ -14,31 +14,33 @@ let state = {
     needIdx: 0 
 };
 
-const DWELL_REQ = 30; // Czas ładowania (ok. 1.5 - 2 sekundy)
+const DWELL_REQ = 25; // Szybkość ładowania (ok. 1.5 sekundy)
 
-// Funkcja Alarmu
+// Funkcja Alarmu z wyraźniejszym dźwiękiem
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = actx.createOscillator();
     const gain = actx.createGain();
     
-    osc.type = 'siren'; // Możesz zmienić na 'square' dla ostrzejszego dźwięku
-    osc.frequency.setValueAtTime(440, actx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, actx.currentTime + 0.5);
+    osc.type = 'square'; 
+    osc.frequency.setValueAtTime(600, actx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, actx.currentTime + 0.4);
     
-    gain.gain.setValueAtTime(0.2, actx.currentTime);
+    gain.gain.setValueAtTime(0.3, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.9);
+    
     osc.connect(gain);
     gain.connect(actx.destination);
     
     osc.start();
     osc.stop(actx.currentTime + 1);
-    console.log("ALARM URUCHOMIONY");
 }
 
 // Inicjalizacja Potrzeb
 function initNeeds() {
     const nGrid = document.getElementById('needs-grid');
-    nGrid.innerHTML = ''; // Czyścimy przed dodaniem
+    if(!nGrid) return;
+    nGrid.innerHTML = ''; 
     needs.forEach((n, i) => {
         const d = document.createElement('div');
         d.className = 'need-item';
@@ -49,23 +51,12 @@ function initNeeds() {
 }
 initNeeds();
 
-// GŁÓWNA LOGIKA WYBORU
 function execute(dir) {
     if (state.view === 'menu') {
-        // MECHANIKA MENU
-        if (dir === 'left') {
-            console.log("Wybieram Alfabet");
-            setView('alpha');
-        }
-        if (dir === 'right') {
-            console.log("Wybieram Potrzeby");
-            setView('needs');
-        }
-        if (dir === 'up') {
-            playAlarm();
-        }
+        if (dir === 'left') setView('alpha');
+        if (dir === 'right') setView('needs');
+        if (dir === 'up') playAlarm();
     } else if (state.view === 'alpha') {
-        // MECHANIKA ALFABETU
         if (dir === 'up') setView('menu');
         if (dir === 'left') state.sentence += letters[state.alphaIdx];
         if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
@@ -75,10 +66,9 @@ function execute(dir) {
             setView('menu');
         }
     } else if (state.view === 'needs') {
-        // MECHANIKA POTRZEB
         if (dir === 'up') setView('menu');
         if (dir === 'left') {
-            document.getElementById('final-output').innerText = needs[state.needIdx].t;
+            document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
     }
@@ -92,7 +82,6 @@ function setView(v) {
     state.dir = 'center';
 }
 
-// Konfiguracja MediaPipe Face Mesh
 const faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
 faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5});
 
@@ -105,19 +94,26 @@ faceMesh.onResults(res => {
 
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
     const landmarks = res.multiFaceLandmarks[0];
+    
+    // Punkt nosa (1), lewe oko (33), prawe oko (263)
     const nose = landmarks[1];
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
     const forehead = landmarks[10];
-    const chin = landmarks[152];
 
+    // OBLICZANIE PRZECHYŁU (TILT) zamiast obrotu
+    // Wykorzystujemy różnicę wysokości między oczami
+    const eyeDiffY = leftEye.y - rightEye.y; 
+    
     let move = 'center';
 
-    // Detekcja ruchu głowy (LEWO / PRAWO / GÓRA / DÓŁ)
-    if (nose.x > 0.62) move = 'left'; // Przechył w lewo
-    else if (nose.x < 0.38) move = 'right'; // Przechył w prawo
-    else if (nose.y < forehead.y - 0.02) move = 'up'; // Przechył w górę (ALARM w menu)
-    else if (nose.y > chin.y - 0.05) move = 'down'; // Przechył w dół
+    // Detekcja przechyłu bocznego (głowa w bok)
+    if (eyeDiffY < -0.04) move = 'left'; 
+    else if (eyeDiffY > 0.04) move = 'right'; 
+    // Detekcja góra/dół (bazując na pozycji nosa względem czoła)
+    else if (nose.y < forehead.y + 0.08) move = 'up'; // Zwiększony margines dla ALARMU
+    else if (nose.y > forehead.y + 0.18) move = 'down';
 
-    // Logika Dwell Time (Ładowanie paska)
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
     } else {
@@ -135,24 +131,19 @@ faceMesh.onResults(res => {
 
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
-    
-    // Resetuj wszystkie paski
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
     
-    // Aktualizuj pasek tylko dla aktualnego kierunku w Menu
     if (state.view === 'menu') {
         if (move === 'left') document.getElementById('bar-left').style.width = p + '%';
         if (move === 'right') document.getElementById('bar-right').style.width = p + '%';
         if (move === 'up') document.getElementById('bar-up').style.width = p + '%';
     }
     
-    // Podgląd zdania w alfabecie
     if (state.view === 'alpha') {
         document.getElementById('sentence').innerText = state.sentence || "---";
     }
 }
 
-// Skanowanie automatyczne dla alfabetu i potrzeb
 setInterval(() => {
     if (state.view === 'alpha') {
         state.alphaIdx = (state.alphaIdx + 1) % letters.length;
@@ -163,7 +154,7 @@ setInterval(() => {
         const activeItem = document.getElementById(`n-${state.needIdx}`);
         if(activeItem) activeItem.classList.add('active');
     }
-}, 3000); // Zmiana co 3 sekundy
+}, 3500);
 
 const cam = new Camera(document.getElementById('video'), {
     onFrame: async () => { await faceMesh.send({image: document.getElementById('video')}) },
