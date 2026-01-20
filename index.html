@@ -2,84 +2,66 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BCI Professional Dashboard</title>
+    <title>HeadTalk BCI - Damian Cybula</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
-<body class="bci-dark">
-    <div class="app-layout">
-        <aside class="sidebar-modern">
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
             <div class="brand">BCI MENU</div>
-            
-            <div class="message-display">
-                <small>Wysłana wiadomość:</small>
-                <div id="output-final" class="glow-text">Oczekiwanie...</div>
-            </div>
+            <div class="msg-label">KOMUNIKAT:</div>
+            <div id="final-output" class="final-text">Oczekiwanie...</div>
             
             <div class="camera-card">
                 <canvas id="cameraCanvas"></canvas>
-                <div class="scan-line"></div>
             </div>
             
             <div class="status-indicator">
-                <div class="pulse-dot"></div>
-                <span id="cam-status">System Aktywny</span>
+                <span class="dot"></span> System Aktywny
             </div>
         </aside>
 
-        <main class="content-area">
+        <main class="stage">
+            <h1 class="main-title">System komunikacji</h1>
+
             <section id="view-menu" class="view active">
-                <div class="tile alarm-tile" id="tile-alarm">
-                    <div class="tile-content">
-                        <span class="nav-arrow">↑</span>
-                        <h2>URUCHOM ALARM</h2>
-                    </div>
-                    <div class="progress-fill" id="bar-up"></div>
+                <div class="tile tile-long alarm" id="tile-up">
+                    <div class="tile-content">⬆ ALARM</div>
+                    <div class="progress" id="bar-up"></div>
                 </div>
-
-                <div class="main-grid">
-                    <div class="tile nav-tile" id="tile-alpha">
+                <div class="tile-grid">
+                    <div class="tile tile-sq" id="tile-left">
                         <div class="tile-content">
-                            <span class="nav-arrow">←</span>
-                            <h3>ALFABET</h3>
+                            <h2>ALFABET</h2>
+                            <p>A B C ...</p>
+                            <span class="icon">⬅</span>
                         </div>
-                        <div class="progress-fill" id="bar-left"></div>
+                        <div class="progress" id="bar-left"></div>
                     </div>
-
-                    <div class="tile nav-tile" id="tile-needs">
+                    <div class="tile tile-sq" id="tile-right">
                         <div class="tile-content">
-                            <span class="nav-arrow">→</span>
-                            <h3>POTRZEBY</h3>
+                            <h2>WYBÓR</h2>
+                            <p>POTRZEBY</p>
+                            <span class="icon">➡</span>
                         </div>
-                        <div class="progress-fill" id="bar-right"></div>
+                        <div class="progress" id="bar-right"></div>
                     </div>
                 </div>
             </section>
 
             <section id="view-alpha" class="view">
-                <div class="alpha-container">
-                    <div class="letter-box" id="current-letter">A</div>
-                    <div class="sentence-bar" id="sentence-preview">---</div>
-                </div>
-                <div class="nav-legend">
-                    <span>← Dodaj</span>
-                    <span>→ Usuń</span>
-                    <span>↓ WYŚLIJ</span>
-                    <span>↑ WRÓĆ</span>
-                </div>
+                <div class="letter-box" id="cur-let">A</div>
+                <div class="sentence-box" id="sentence">---</div>
+                <div class="nav-hint">⬅ Dodaj | ➡ Usuń | ⬇ WYŚLIJ | ⬆ MENU</div>
             </section>
 
             <section id="view-needs" class="view">
-                <div class="needs-grid" id="needs-container"></div>
-                <div class="nav-legend">
-                    <span>← WYBIERZ</span>
-                    <span>↑ WRÓĆ</span>
-                </div>
+                <div class="needs-container" id="needs-grid"></div>
+                <div class="nav-hint">⬅ WYBIERZ | ⬆ MENU</div>
             </section>
 
-            <footer class="legal-footer">
-                Damian Cybula | Inżynieria Biomedyczna 2026
-            </footer>
+            <footer class="footer">Damian Cybula | Inżynieria Biomedyczna 2026</footer>
         </main>
     </div>
 
