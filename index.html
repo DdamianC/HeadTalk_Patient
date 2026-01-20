@@ -10,31 +10,48 @@
 
 <div id="statusBar">
   <span id="modeLabel">TRYB: MENU</span>
-  <span>🟢 TRACKING</span>
+  <span id="trackLabel">🔴 BRAK TWARZY</span>
 </div>
 
 <h1>🧠 BCI Communication System</h1>
 
 <section id="menu">
   <div class="tiles">
-    <div class="tile" id="menuLeft">ALFABET</div>
-    <div class="tile" id="menuRight">TAK / NIE</div>
+    <div class="tile" id="tileAlphabet">
+      ALFABET
+      <div class="progress" id="progAlphabet"></div>
+    </div>
+    <div class="tile" id="tileYesNo">
+      TAK / NIE
+      <div class="progress" id="progYesNo"></div>
+    </div>
   </div>
 </section>
 
 <section id="alphabetView" hidden>
   <div class="letterTile" id="letterTile">A</div>
-  <div class="sentenceBox">
+
+  <div class="sentenceBox" id="sentenceBox">
     <span id="sentence"></span><span class="cursor">▌</span>
   </div>
-  <div class="hint">⬅ dodaj | ➡ usuń | ⬇ wyślij | ⬆ menu</div>
+
+  <div class="hint">
+    ⬅ dodaj | ➡ usuń | ⬇ wyślij | ⬆ menu
+  </div>
 </section>
 
 <section id="yesnoView" hidden>
   <div class="question" id="questionText">Pytanie...</div>
+
   <div class="tiles">
-    <div class="tile yes">TAK</div>
-    <div class="tile no">NIE</div>
+    <div class="tile" id="yesTile">
+      TAK
+      <div class="progress" id="progYes"></div>
+    </div>
+    <div class="tile" id="noTile">
+      NIE
+      <div class="progress" id="progNo"></div>
+    </div>
   </div>
 </section>
 
