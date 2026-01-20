@@ -124,10 +124,12 @@ faceMesh.onResults(res => {
 
     const eyeDiffY = leftEye.y - rightEye.y;
 
+    // Logika detekcji kierunków głowy
     if (nose.y < forehead.y + 0.08) move = 'up';
     else if (nose.y > forehead.y + 0.19) move = 'down';
-else if (eyeDiffY > 0.045) move = 'right';
-else if (eyeDiffY < -0.045) move = 'left';
+    // POPRAWKA: Odwrócenie detekcji lewo/prawo
+    else if (eyeDiffY < -0.045) move = 'right';
+    else if (eyeDiffY > 0.045) move = 'left';
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
