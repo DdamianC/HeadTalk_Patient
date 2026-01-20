@@ -1,51 +1,61 @@
-const DB="https://bci-komunikacja-default-rtdb.europe-west1.firebasedatabase.app";
-
 const letters=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+const needs=[
+"Woda","Jedzenie","Toaleta","Ból",
+"Zimno","Gorąco","Pomoc","Pozycja",
+"Leki","Sen","Duszność","Inne"
+];
+
+let view="menu";
 let letterIndex=0;
 let sentence="";
-let view="menu";
+let needIndex=0;
 
-let neutralX=null;
-let neutralY=null;
-let currentDir="center";
-let dwell=0;
-const DWELL_TIME=20;
+let neutralX=null,neutralY=null;
+let dwell=0,currentDir="center";
+const DWELL=20;
 
 const video=document.getElementById("video");
-const canvas=document.getElementById("camCanvas");
-const ctx=canvas.getContext("2d");
+const cam=document.getElementById("cam");
+const ctx=cam.getContext("2d");
 
-const letterTile=document.getElementById("letterTile");
+const status=document.getElementById("status");
+const letterEl=document.getElementById("letter");
 const sentenceEl=document.getElementById("sentence");
 
-/* ===== MEDIAPIPE ===== */
-const faceMesh=new FaceMesh({
- locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+/* ===== NEEDS ===== */
+const grid=document.getElementById("needsGrid");
+needs.forEach(n=>{
+ const d=document.createElement("div");
+ d.className="tile";
+ d.innerText=n;
+ d.innerHTML+=`<div class="fill"></div>`;
+ grid.appendChild(d);
 });
 
-faceMesh.setOptions({maxNumFaces:1,minDetectionConfidence:0.7});
-
-faceMesh.onResults(r=>{
- ctx.save();
- ctx.scale(-1,1);
- ctx.drawImage(r.image,-canvas.width,0,canvas.width,canvas.height);
+/* ===== FACE ===== */
+const fm=new FaceMesh({
+ locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+});
+fm.setOptions({maxNumFaces:1});
+fm.onResults(r=>{
+ ctx.clearRect(0,0,cam.width,cam.height);
+ ctx.save();ctx.scale(-1,1);
+ ctx.drawImage(r.image,-cam.width,0,cam.width,cam.height);
  ctx.restore();
 
  if(!r.multiFaceLandmarks){
-  document.getElementById("trackLabel").innerText="🔴 BRAK TWARZY";
+  status.innerText="🔴 brak twarzy";
   neutralX=null;
   return;
  }
 
- document.getElementById("trackLabel").innerText="🟢 TRACKING";
-
+ status.innerText="🟢 tracking";
  const lm=r.multiFaceLandmarks[0];
 
  lm.forEach(p=>{
   ctx.beginPath();
-  ctx.arc(p.x*canvas.width,p.y*canvas.height,1.5,0,2*Math.PI);
-  ctx.fillStyle="#00ff88";
-  ctx.fill();
+  ctx.arc(p.x*cam.width,p.y*cam.height,1.5,0,2*Math.PI);
+  ctx.fillStyle="#00ff88";ctx.fill();
  });
 
  const nose=lm[1].x;
@@ -64,116 +74,97 @@ faceMesh.onResults(r=>{
  let dir="center";
  if(dx<-0.05)dir="left";
  else if(dx>0.05)dir="right";
- else if(dy>0.04)dir="down";
- else if(dy<-0.04)dir="up";
+ else if(dy>0.05)dir="down";
+ else if(dy<-0.05)dir="up";
 
- if(dir===currentDir){
-  dwell++;
- }else{
-  dwell=0;
-  currentDir=dir;
-  resetProgress();
- }
+ if(dir===currentDir) dwell++;
+ else{ dwell=0; currentDir=dir; resetFill(); }
 
- if(dwell>DWELL_TIME){
-  trigger(dir);
-  dwell=0;
-  resetProgress();
- }
-
- updateProgress(dwell/DWELL_TIME*100);
+ if(dwell>DWELL){ action(dir); dwell=0; resetFill(); }
+ fill(dwell/DWELL*100);
 });
 
 /* ===== CAMERA ===== */
 navigator.mediaDevices.getUserMedia({video:{width:320,height:240}})
 .then(s=>{
  video.srcObject=s;
- const cam=new Camera(video,{
-  onFrame:()=>faceMesh.send({image:video}),
-  fps:10
- });
- cam.start();
+ new Camera(video,{onFrame:()=>fm.send({image:video}),fps:10}).start();
 });
 
-/* ===== UI ===== */
-function resetProgress(){
- document.querySelectorAll(".progress").forEach(p=>p.style.width="0%");
+/* ===== UI LOGIC ===== */
+function resetFill(){
+ document.querySelectorAll(".fill").forEach(f=>f.style.width="0%");
 }
 
-function updateProgress(p){
+function fill(p){
  if(view==="menu"){
-  if(currentDir==="left") document.getElementById("progAlphabet").style.width=p+"%";
-  if(currentDir==="right") document.getElementById("progYesNo").style.width=p+"%";
- }
- if(view==="yesno"){
-  if(currentDir==="left") document.getElementById("progYes").style.width=p+"%";
-  if(currentDir==="right") document.getElementById("progNo").style.width=p+"%";
+  if(currentDir==="left") document.querySelector("#menuAlphabet .fill").style.width=p+"%";
+  if(currentDir==="right") document.querySelector("#menuNeeds .fill").style.width=p+"%";
+  if(currentDir==="up") document.querySelector("#menuAlarm .fill").style.width=p+"%";
  }
 }
 
-function trigger(dir){
+function action(dir){
  if(view==="menu"){
   if(dir==="left") openAlphabet();
-  if(dir==="right") openYesNo();
+  if(dir==="right") openNeeds();
+  if(dir==="up") alarm();
  }
 
  if(view==="alphabet"){
-  if(dir==="left") sentence+=letterTile.innerText;
+  if(dir==="left") sentence+=letterEl.innerText;
   if(dir==="right") sentence=sentence.slice(0,-1);
-  if(dir==="down") sendSentence();
-  if(dir==="up") backToMenu();
+  if(dir==="down") alert("ZDANIE: "+sentence);
+  if(dir==="up") back();
   sentenceEl.innerText=sentence;
  }
 
- if(view==="yesno"){
-  if(dir==="left") sendAnswer("TAK");
-  if(dir==="right") sendAnswer("NIE");
-  if(dir==="up") backToMenu();
+ if(view==="needs"){
+  if(dir==="left") sentence=needs[needIndex];
+  if(dir==="down") alert("POTRZEBA: "+sentence);
+  if(dir==="up") back();
  }
 }
 
 function openAlphabet(){
  view="alphabet";
- document.getElementById("menu").hidden=true;
- document.getElementById("alphabetView").hidden=false;
+ menu.hidden=true;
+ alphabet.hidden=false;
  cycleLetters();
 }
 
-function openYesNo(){
- view="yesno";
- document.getElementById("menu").hidden=true;
- document.getElementById("yesnoView").hidden=false;
+function openNeeds(){
+ view="needs";
+ menu.hidden=true;
+ needs.hidden=false;
+ cycleNeeds();
 }
 
-function backToMenu(){
+function back(){
  view="menu";
- document.getElementById("menu").hidden=false;
- document.getElementById("alphabetView").hidden=true;
- document.getElementById("yesnoView").hidden=true;
+ menu.hidden=false;
+ alphabet.hidden=true;
+ needs.hidden=true;
 }
 
 function cycleLetters(){
  if(view!=="alphabet")return;
- letterTile.innerText=letters[letterIndex];
+ letterEl.innerText=letters[letterIndex];
  letterIndex=(letterIndex+1)%letters.length;
- setTimeout(cycleLetters,2000);
+ setTimeout(cycleLetters,2500);
 }
 
-function sendSentence(){
- if(!sentence)return;
- fetch(`${DB}/messages.json`,{
-  method:"POST",
-  body:JSON.stringify({text:sentence,time:Date.now()})
+function cycleNeeds(){
+ if(view!=="needs")return;
+ document.querySelectorAll("#needsGrid .tile").forEach((t,i)=>{
+  t.style.outline=i===needIndex?"3px solid #00ff88":"none";
  });
- sentence="";
- sentenceEl.innerText="";
- backToMenu();
+ needIndex=(needIndex+1)%needs.length;
+ setTimeout(cycleNeeds,5000);
 }
 
-function sendAnswer(v){
- fetch(`${DB}/answers.json`,{
-  method:"POST",
-  body:JSON.stringify({value:v,time:Date.now()})
- });
- backToMenu();
+function alarm(){
+ const a=new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+ a.loop=true;a.play();
+ alert("⛔ WEZWANO OPIEKUNA");
 }
