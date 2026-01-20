@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -6,177 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HeadTalk BCI - Damian Cybula</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --accent: #38bdf8;
-            --text: #f8fafc;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --warning: #f59e0b;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 320px;
-            background: #020617;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #334155;
-            gap: 1rem;
-        }
-
-        .brand { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
-        
-        .final-text {
-            background: #000;
-            padding: 1.5rem;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            min-height: 60px;
-            border-left: 4px solid var(--accent);
-            word-wrap: break-word;
-        }
-
-        .camera-card {
-            width: 100%;
-            aspect-ratio: 4/3;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            margin-top: auto;
-        }
-
-        /* Lustrzane odbicie podglądu */
-        #cameraCanvas {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
-        }
-
-        /* Główny ekran */
-        .stage {
-            flex-grow: 1;
-            padding: 2rem 4rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .view { display: none; flex-direction: column; gap: 20px; }
-        .view.active { display: flex; }
-
-        /* Kafelki */
-        .tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .tile {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 2.5rem;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-            transition: transform 0.2s;
-            border: 2px solid transparent;
-        }
-
-        .tile-long { grid-column: span 2; padding: 1.5rem; }
-        .tile h2 { margin: 0; font-size: 2rem; font-weight: 800; }
-        .icon { font-size: 3rem; display: block; margin-bottom: 10px; }
-
-        /* Paski postępu dla sterowania głową */
-        .progress {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 12px;
-            background: var(--accent);
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-
-        .alarm { background: #450a0a; border: 2px solid var(--danger); }
-        .alarm .progress { background: var(--danger); }
-
-        /* Sekcja alfabetu - Wyświetlacz */
-        .alpha-display {
-            background: var(--card);
-            border-radius: 24px;
-            padding: 4rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            border: 4px solid #334155;
-        }
-
-        .letter-box {
-            font-size: 10rem;
-            font-weight: 900;
-            color: var(--accent);
-            line-height: 1;
-        }
-
-        .sentence-box {
-            font-size: 2.5rem;
-            margin-top: 20px;
-            color: #94a3b8;
-            min-height: 1.2em;
-        }
-
-        /* Pasek automatycznej zmiany litery (pomarańczowy - co 4s) */
-        .auto-progress-container {
-            width: 100%;
-            height: 15px;
-            background: #334155;
-            margin: 20px 0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .auto-progress-bar {
-            height: 100%;
-            background: var(--warning); /* Pomarańczowy kolor paska zmiany */
-            width: 0%;
-        }
-
-        /* Kolory akcji w alfabecie */
-        #bar-left-alpha { background-color: var(--success); } /* Zielony dla DODAJ */
-        #bar-right-alpha { background-color: var(--danger); } /* Czerwony dla USUŃ */
-
-        .needs-container {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-        }
-
-        .need-item {
-            background: var(--card);
-            padding: 1rem;
-            border-radius: 15px;
-            text-align: center;
-            border: 3px solid transparent;
-        }
-
-        .need-item.active {
-            border-color: var(--accent);
-            background: #1e293b;
-            transform: scale(1.05);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -224,13 +53,11 @@
                 <div class="progress" id="bar-up-alpha"></div>
             </div>
 
-            <div class="alpha-display">
+            <div class="alpha-main">
                 <div class="letter-box" id="cur-let">A</div>
-                
                 <div class="auto-progress-container">
                     <div class="auto-progress-bar" id="auto-letter-bar"></div>
                 </div>
-                
                 <div class="sentence-box" id="sentence">---</div>
             </div>
 
@@ -257,11 +84,10 @@
                 <div class="progress" id="bar-up-needs"></div>
             </div>
 
-            <div class="needs-container" id="needs-grid">
-                </div>
+            <div class="needs-container" id="needs-grid"></div>
 
-            <div class="tile tile-long" style="background: #1e293b; border: 2px solid var(--success);">
-                <div style="font-weight: bold; color: var(--success);">⬅ WYBIERZ PODŚWIETLONE (Lewo)</div>
+            <div class="tile tile-long" style="background: #1e293b; border: 2px solid var(--success); margin-top: 20px;">
+                <div style="font-weight: bold; color: var(--success);">⬅ WYBIERZ PODŚWIETLONE (Lewo i przytrzymaj)</div>
                 <div class="progress" id="bar-left-needs"></div>
             </div>
         </section>
