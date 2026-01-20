@@ -20,8 +20,8 @@ let state = {
 let alphaTimer = 0;
 
 const START_DELAY = 60;
-const CHANGE_TIME_ALPHA = 15;  // 1.5 sekundy
-const CHANGE_TIME_NEEDS = 40;  // 4.0 sekundy
+const CHANGE_TIME_ALPHA = 15;  // 1.5s
+const CHANGE_TIME_NEEDS = 40;  // 4s
 const DWELL_REQ = 20; 
 
 /* ================= AUDIO ALARM ================= */
@@ -40,8 +40,10 @@ function playAlarm() {
     oscillator.stop(audioCtx.currentTime + 1);
 }
 
+/* ================= INICJALIZACJA POTRZEB ================= */
 function initNeeds() {
     const grid = document.getElementById('needs-grid');
+    if(!grid) return;
     grid.innerHTML = '';
     needs.forEach((n, i) => {
         const d = document.createElement('div');
@@ -53,14 +55,23 @@ function initNeeds() {
 }
 initNeeds();
 
+function highlightNeed() {
+    document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
+    const el = document.getElementById(`n-${state.needIdx}`);
+    if (el) el.classList.add('active');
+}
+
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-    document.getElementById(`view-${v}`).classList.add('active');
+    const targetView = document.getElementById(`view-${v}`);
+    if(targetView) targetView.classList.add('active');
+
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
     state.entryTime = 0;
     alphaTimer = 0;
+
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
     if (v === 'needs') highlightNeed();
 }
@@ -93,12 +104,10 @@ function execute(dir) {
     }
 }
 
-/* ================= FACE MESH ================= */
+/* ================= FACE MESH & CAMERA ================= */
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 320;
-canvas.height = 240;
 
 const faceMesh = new FaceMesh({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
@@ -126,16 +135,11 @@ faceMesh.onResults(res => {
     let move = 'center';
     const faceCenterX = (leftFaceEdge.x + rightFaceEdge.x) / 2;
 
-    if (nose.y < forehead.y + 0.05) { 
-        move = 'up';
-    } else if (nose.y > forehead.y + 0.15) { 
-        move = 'down';
-    } 
-    else if (nose.x > faceCenterX + 0.012) {
-        move = 'left'; 
-    } else if (nose.x < faceCenterX - 0.012) {
-        move = 'right';
-    }
+    // KALIBRACJA CZUŁOŚCI
+    if (nose.y < forehead.y + 0.05) move = 'up';
+    else if (nose.y > forehead.y + 0.15) move = 'down';
+    else if (nose.x > faceCenterX + 0.012) move = 'left'; 
+    else if (nose.x < faceCenterX - 0.012) move = 'right';
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -158,51 +162,34 @@ function updateUI(move) {
     const bar = document.getElementById(`bar-${move}-${state.view}`);
     if (bar) bar.style.width = p + '%';
 
-    // Aktualizacja paska automatycznego przeskoku (LITERY)
     if (state.view === 'alpha') {
         document.getElementById('cur-let').innerText = letters[state.alphaIdx];
         document.getElementById('sentence').innerText = state.sentence || "---";
         const autoBarAlpha = document.getElementById('auto-letter-bar-alpha');
-        if (autoBarAlpha) {
-            autoBarAlpha.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
-        }
+        if (autoBarAlpha) autoBarAlpha.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
     }
 
-    // Aktualizacja paska automatycznego przeskoku (POTRZEBY)
     if (state.view === 'needs') {
         const autoBarNeeds = document.getElementById('auto-letter-bar-needs');
-        if (autoBarNeeds) {
-            autoBarNeeds.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_NEEDS) * 100 + '%';
-        }
+        if (autoBarNeeds) autoBarNeeds.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_NEEDS) * 100 + '%';
     }
 }
 
-function highlightNeed() {
-    document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-    const el = document.getElementById(`n-${state.needIdx}`);
-    if (el) el.classList.add('active');
-}
-
-/* ================= GŁÓWNY TIMER SYSTEMU ================= */
+/* ================= GŁÓWNY TIMER ================= */
 setInterval(() => {
     if (state.view !== 'alpha' && state.view !== 'needs') return;
-    
     if (state.entryTime < START_DELAY) {
         state.entryTime++;
         return;
     }
-
-    // ZATRZYMANIE CZASU: Jeśli użytkownik rusza głową (dir !== center), timer nie nalicza
-    if (state.dir !== 'center') return;
+    if (state.dir !== 'center') return; // Zamrażanie czasu podczas ruchu głową
 
     alphaTimer++;
     const currentLimit = (state.view === 'alpha') ? CHANGE_TIME_ALPHA : CHANGE_TIME_NEEDS;
     
     if (alphaTimer >= currentLimit) {
         alphaTimer = 0;
-        if (state.view === 'alpha') {
-            state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-        }
+        if (state.view === 'alpha') state.alphaIdx = (state.alphaIdx + 1) % letters.length;
         if (state.view === 'needs') {
             state.needIdx = (state.needIdx + 1) % needs.length;
             highlightNeed();
@@ -210,8 +197,12 @@ setInterval(() => {
     }
 }, 100);
 
-const cam = new Camera(video, {
-    onFrame: async () => { await faceMesh.send({ image: video }); },
-    width: 640, height: 480
+/* ================= START KAMERY ================= */
+const camera = new Camera(video, {
+    onFrame: async () => {
+        await faceMesh.send({image: video});
+    },
+    width: 640,
+    height: 480
 });
-cam.start();
+camera.start();
