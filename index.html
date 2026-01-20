@@ -2,79 +2,75 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BCI Communication</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <title>BCI System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="container">
-    <aside class="sidebar">
-        <div class="top-label">Wiadomość od pacjenta</div>
-        <div class="avatar-box">🍎</div>
-        
-        <div class="video-container">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="output_canvas"></canvas>
-        </div>
-        
-        <div class="status-indicator">
-            <span id="dot"></span> kamera <b id="current-view-label">MENU</b>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <h1 class="main-title">System komunikacji</h1>
-
-        <div id="view-menu" class="view active">
-            <div class="card long-card" id="btn-alarm">
-                <div class="card-content"><span>⬆</span> ALARM</div>
-                <div class="loader"></div>
+    <div class="dashboard">
+        <aside class="side-panel">
+            <div class="msg-bubble">Wiadomość od pacjenta</div>
+            <div class="avatar-circle">🍎</div>
+            <div class="camera-box">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="output_canvas"></canvas>
             </div>
-            <div class="row">
-                <div class="card square-card" id="btn-alphabet">
-                    <div class="card-content">
-                        <h2>ALFABET</h2>
-                        <p>A B C...</p>
-                        <span class="arrow">⬅</span>
-                    </div>
-                    <div class="loader"></div>
+            <div class="cam-status">
+                <span id="dot"></span> kamera <strong id="current-view-name">MENU</strong>
+            </div>
+        </aside>
+
+        <main class="main-stage">
+            <h1 class="app-title">System komunikacji</h1>
+
+            <div id="view-menu" class="view active">
+                <div class="tile tile-long" id="btn-alarm">
+                    <div class="tile-content"><span class="arrow-up">⬆</span> ALARM</div>
+                    <div class="progress"></div>
                 </div>
-                <div class="card square-card" id="btn-needs">
-                    <div class="card-content">
-                        <h2>Wybór</h2>
-                        <div class="icons-preview">⏹⏹⏹</div>
-                        <span class="arrow">➡</span>
+                <div class="tile-grid">
+                    <div class="tile tile-sq" id="btn-alphabet">
+                        <div class="tile-content">
+                            <h2>ALFABET</h2>
+                            <p>A B C ...</p>
+                            <span class="arrow-left">⬅</span>
+                        </div>
+                        <div class="progress"></div>
                     </div>
-                    <div class="loader"></div>
+                    <div class="tile tile-sq" id="btn-needs">
+                        <div class="tile-content">
+                            <h2>Wybór</h2>
+                            <div class="icons-row">⏹⏹⏹</div>
+                            <span class="arrow-right">➡</span>
+                        </div>
+                        <div class="progress"></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="view-alphabet" class="view">
-            <div class="big-letter-box" id="active-letter">A</div>
-            <div class="text-output" id="sentence">Zacznij pisać...</div>
-            <div class="bottom-nav">
-                <div class="nav-item">Dodaj do ekranu głównego <span>⬇</span></div>
-                <div class="nav-item grey">Wróć do menu <span>⬆</span></div>
+            <div id="view-alphabet" class="view">
+                <div class="letter-box" id="active-letter">A</div>
+                <div class="sentence-box" id="sentence-out">Tu się tworzy zdanie</div>
+                <div class="actions">
+                    <div class="action-btn">Dodaj do ekranu głównego <span>⬇</span></div>
+                    <div class="action-btn grey">Wróć do menu <span>⬆</span></div>
+                </div>
             </div>
-        </div>
 
-        <div id="view-needs" class="view">
-            <h2 class="section-title">Wybierz co potrzebujesz</h2>
-            <div class="needs-grid" id="needs-grid"></div>
-            <div class="bottom-nav">
-                <div class="nav-item">Dodaj do ekranu głównego <span>⬇</span></div>
-                <div class="nav-item grey">Wróć do menu <span>⬆</span></div>
+            <div id="view-needs" class="view">
+                <h2 class="view-title">Wybierz co potrzebujesz</h2>
+                <div class="needs-layout" id="needs-container"></div>
+                <div class="actions">
+                    <div class="action-btn">Dodaj do ekranu głównego <span>⬇</span></div>
+                    <div class="action-btn grey">Wróć do menu <span>⬆</span></div>
+                </div>
             </div>
-        </div>
 
-        <div class="footer-name">Damian Cybula itd.</div>
-    </main>
-</div>
+            <div class="footer">Damian Cybula itd</div>
+        </main>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
