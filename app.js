@@ -20,9 +20,9 @@ let state = {
 let alphaTimer = 0;
 
 const START_DELAY = 60;
-const CHANGE_TIME_ALPHA = 15; 
-const CHANGE_TIME_NEEDS = 40; 
-const DWELL_REQ = 20; // ZMNIEJSZONO z 25 (szybsza reakcja po nakierowaniu)
+const CHANGE_TIME_ALPHA = 15;  // 1.5 sekundy
+const CHANGE_TIME_NEEDS = 40;  // 4.0 sekundy
+const DWELL_REQ = 20; 
 
 /* ================= AUDIO ALARM ================= */
 function playAlarm() {
@@ -90,11 +90,10 @@ function execute(dir) {
             document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
-        if (dir === 'right') document.getElementById('final-output').innerText = "Oczekiwanie...";
     }
 }
 
-/* ================= FACE MESH - OPTYMALIZACJA KALIBRACJI ================= */
+/* ================= FACE MESH ================= */
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
 const ctx = canvas.getContext('2d');
@@ -127,15 +126,11 @@ faceMesh.onResults(res => {
     let move = 'center';
     const faceCenterX = (leftFaceEdge.x + rightFaceEdge.x) / 2;
 
-    /* ✅ NOWE CZUŁE PROGI (Zoptymalizowane pod małe ruchy) */
-    
-    // GÓRA/DÓŁ - mniejsze różnice (0.05 zamiast 0.08)
     if (nose.y < forehead.y + 0.05) { 
         move = 'up';
     } else if (nose.y > forehead.y + 0.15) { 
         move = 'down';
     } 
-    // LEWO/PRAWO - mniejszy margines (0.012 zamiast 0.02)
     else if (nose.x > faceCenterX + 0.012) {
         move = 'left'; 
     } else if (nose.x < faceCenterX - 0.012) {
@@ -159,14 +154,26 @@ faceMesh.onResults(res => {
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
     document.querySelectorAll('.progress:not(.auto-progress-bar)').forEach(b => b.style.width = '0%');
+    
     const bar = document.getElementById(`bar-${move}-${state.view}`);
     if (bar) bar.style.width = p + '%';
 
+    // Aktualizacja paska automatycznego przeskoku (LITERY)
     if (state.view === 'alpha') {
         document.getElementById('cur-let').innerText = letters[state.alphaIdx];
         document.getElementById('sentence').innerText = state.sentence || "---";
-        const autoBar = document.getElementById('auto-letter-bar');
-        autoBar.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
+        const autoBarAlpha = document.getElementById('auto-letter-bar-alpha');
+        if (autoBarAlpha) {
+            autoBarAlpha.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
+        }
+    }
+
+    // Aktualizacja paska automatycznego przeskoku (POTRZEBY)
+    if (state.view === 'needs') {
+        const autoBarNeeds = document.getElementById('auto-letter-bar-needs');
+        if (autoBarNeeds) {
+            autoBarNeeds.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_NEEDS) * 100 + '%';
+        }
     }
 }
 
@@ -176,18 +183,26 @@ function highlightNeed() {
     if (el) el.classList.add('active');
 }
 
+/* ================= GŁÓWNY TIMER SYSTEMU ================= */
 setInterval(() => {
     if (state.view !== 'alpha' && state.view !== 'needs') return;
+    
     if (state.entryTime < START_DELAY) {
         state.entryTime++;
         return;
     }
+
+    // ZATRZYMANIE CZASU: Jeśli użytkownik rusza głową (dir !== center), timer nie nalicza
     if (state.dir !== 'center') return;
+
     alphaTimer++;
     const currentLimit = (state.view === 'alpha') ? CHANGE_TIME_ALPHA : CHANGE_TIME_NEEDS;
+    
     if (alphaTimer >= currentLimit) {
         alphaTimer = 0;
-        if (state.view === 'alpha') state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+        if (state.view === 'alpha') {
+            state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+        }
         if (state.view === 'needs') {
             state.needIdx = (state.needIdx + 1) % needs.length;
             highlightNeed();
