@@ -1,94 +1,92 @@
-const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
-const needs = [
-    {t: "Jedzenie", i: "🍎"}, {t: "Picie", i: "💧"}, {t: "Leki", i: "💊"}, {t: "Ból", i: "😫"},
-    {t: "Zimno", i: "❄️"}, {t: "Ciepło", i: "🔥"}, {t: "Pomoc", i: "🆘"}, {t: "Toaleta", i: "🚽"}
+const items = [
+    {n: "Jedzenie", i: "🍎"}, {n: "Picie", i: "💧"}, {n: "Leki", i: "💊"}, {n: "Ból", i: "😫"},
+    {n: "Zimno", i: "❄️"}, {n: "Ciepło", i: "🔥"}, {n: "Pomoc", i: "🆘"}, {n: "Toaleta", i: "🚽"}
 ];
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
 
-let appState = {
-    view: 'menu',
-    txt: '',
-    alphaIdx: 0,
-    needIdx: 0,
-    dwell: 0,
-    currentMove: 'center'
+let state = {
+    v: 'menu',
+    msg: '',
+    cIdx: 0,
+    nIdx: 0,
+    dw: 0,
+    dir: 'center'
 };
 
-// Renderowanie potrzeb
-const grid = document.getElementById('needs-grid');
-needs.forEach((n, i) => {
-    const div = document.createElement('div');
-    div.className = 'need-box';
-    div.id = `need-${i}`;
-    div.innerHTML = `<span style="font-size:3rem">${n.i}</span><br>${n.t}`;
-    grid.appendChild(div);
+// Generuj potrzeby
+const cont = document.getElementById('needs-container');
+items.forEach((x, i) => {
+    const d = document.createElement('div');
+    d.className = 'need-card';
+    d.id = `n-${i}`;
+    d.innerHTML = `<span style="font-size:3rem">${x.i}</span><br>${x.n}`;
+    cont.appendChild(d);
 });
 
-// Skanowanie automatyczne
+// Automat skanujący
 setInterval(() => {
-    if(appState.view === 'alphabet') {
-        appState.alphaIdx = (appState.alphaIdx + 1) % alphabet.length;
-        document.getElementById('active-letter').innerText = alphabet[appState.alphaIdx];
-    } else if(appState.view === 'needs') {
-        document.querySelectorAll('.need-box').forEach(b => b.classList.remove('active'));
-        appState.needIdx = (appState.needIdx + 1) % needs.length;
-        document.getElementById(`need-${appState.needIdx}`).classList.add('active');
+    if(state.v === 'alphabet') {
+        state.cIdx = (state.cIdx + 1) % chars.length;
+        document.getElementById('active-letter').innerText = chars[state.cIdx];
+    } else if(state.v === 'needs') {
+        document.querySelectorAll('.need-card').forEach(c => c.classList.remove('active'));
+        state.nIdx = (state.nIdx + 1) % items.length;
+        document.getElementById(`n-${state.nIdx}`).classList.add('active');
     }
 }, 3000);
 
-function changeView(v) {
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${v}`).classList.add('active');
-    document.getElementById('current-view-label').innerText = v.toUpperCase();
-    appState.view = v;
+function setView(newV) {
+    document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+    document.getElementById(`view-${newV}`).classList.add('active');
+    document.getElementById('current-view-name').innerText = newV.toUpperCase();
+    state.v = newV;
 }
 
-// Obsługa gestów
-function trigger(dir) {
-    if(appState.view === 'menu') {
-        if(dir === 'left') changeView('alphabet');
-        if(dir === 'right') changeView('needs');
-        if(dir === 'up') alert("ALARM!");
+function doMove(d) {
+    if(state.v === 'menu') {
+        if(d === 'left') setView('alphabet');
+        if(d === 'right') setView('needs');
+        if(d === 'up') alert("ALARM!");
     } else {
-        if(dir === 'up' || dir === 'down') changeView('menu');
-        if(dir === 'left' && appState.view === 'alphabet') {
-            appState.txt += alphabet[appState.alphaIdx];
-            document.getElementById('sentence').innerText = appState.txt;
+        if(d === 'up' || d === 'down') setView('menu');
+        if(d === 'left' && state.v === 'alphabet') {
+            state.msg += chars[state.cIdx];
+            document.getElementById('sentence-out').innerText = state.msg;
         }
     }
 }
 
-// MediaPipe
+// MediaPipe Setup
 const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
 faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
 
 faceMesh.onResults(res => {
     if (!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
-    const pts = res.multiFaceLandmarks[0];
-    const nose = pts[1];
+    const p = res.multiFaceLandmarks[0][1];
     
-    let move = 'center';
-    if(nose.x < 0.4) move = 'right';
-    else if(nose.x > 0.6) move = 'left';
-    else if(nose.y < 0.4) move = 'up';
-    else if(nose.y > 0.6) move = 'down';
+    let m = 'center';
+    if(p.x < 0.35) m = 'right';
+    else if(p.x > 0.65) m = 'left';
+    else if(p.y < 0.35) m = 'up';
+    else if(p.y > 0.65) m = 'down';
 
-    if(move !== 'center' && move === appState.currentMove) {
-        appState.dwell++;
-        const pct = (appState.dwell / 20) * 100;
-        document.querySelectorAll('.loader').forEach(l => l.style.width = pct + '%');
+    if(m !== 'center' && m === state.dir) {
+        state.dw++;
+        const pVal = (state.dw / 20) * 100;
+        document.querySelectorAll('.progress').forEach(l => l.style.width = pVal + '%');
     } else {
-        appState.dwell = 0;
-        appState.currentMove = move;
-        document.querySelectorAll('.loader').forEach(l => l.style.width = '0%');
+        state.dw = 0;
+        state.dir = m;
+        document.querySelectorAll('.progress').forEach(l => l.style.width = '0%');
     }
 
-    if(appState.dwell > 20) {
-        trigger(move);
-        appState.dwell = 0;
+    if(state.dw > 20) {
+        doMove(m);
+        state.dw = 0;
     }
 });
 
-const cam = new Camera(document.getElementById('video'), {
+const camera = new Camera(document.getElementById('video'), {
     onFrame: async () => { await faceMesh.send({image: document.getElementById('video')}); }
 });
-cam.start().catch(e => console.log("Błąd kamery: ", e));
+camera.start();
