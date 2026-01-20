@@ -7,8 +7,8 @@ const needs = [
 
 let state = { view: 'menu', dir: 'center', dwell: 0, sentence: "", alphaIdx: 0, needIdx: 0 };
 let alphaTimer = 0;
-const ALPHA_CHANGE_TIME = 40; // ok 4 sekundy (licznik 100ms * 40)
-const DWELL_REQ = 25; // czas przytrzymania dla akcji
+const ALPHA_CHANGE_TIME = 40; // ok 4 sekundy na literę
+const DWELL_REQ = 25; // czas przytrzymania głowy dla akcji
 
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -45,15 +45,18 @@ function execute(dir) {
         if (dir === 'up') playAlarm();
     } 
     else if (state.view === 'alpha') {
-        if (dir === 'up') setView('menu'); // POWRÓT DO MENU TYLKO W GÓRĘ
+        if (dir === 'up') {
+            setView('menu'); // TYLKO GÓRA WRACA
+            return;
+        } 
         
         if (dir === 'left') {
             state.sentence += letters[state.alphaIdx];
-            alphaTimer = 0; // resetujemy czas po dodaniu
+            alphaTimer = 0; // Reset czasu po dodaniu
         }
         if (dir === 'right') {
             state.sentence = state.sentence.slice(0, -1);
-            alphaTimer = 0; // resetujemy czas po usunięciu
+            alphaTimer = 0; // Reset czasu po usunięciu
         }
         if (dir === 'down') {
             document.getElementById('final-output').innerText = state.sentence;
@@ -115,64 +118,53 @@ faceMesh.onResults(res => {
         execute(move);
         state.dwell = 0;
     }
-
     updateUI(move);
 });
 
 function updateUI(move) {
-    const progressPercent = (state.dwell / DWELL_REQ) * 100;
+    const p = (state.dwell / DWELL_REQ) * 100;
     
-    // Resetuj paski menu
-    document.querySelectorAll('.progress').forEach(b => {
-        if (!b.id.includes('next-letter') && !b.id.includes('action-bar')) {
-            b.style.width = '0%';
-        }
-    });
+    // Czyścimy standardowe paski nawigacyjne
+    document.querySelectorAll('.progress:not(#next-letter-bar):not(#action-bar)').forEach(b => b.style.width = '0%');
     
     if (state.view === 'menu') {
-        let barId = `bar-${move}-menu`;
-        let bar = document.getElementById(barId);
-        if(bar) bar.style.width = progressPercent + '%';
+        let bar = document.getElementById(`bar-${move}-menu`);
+        if(bar) bar.style.width = p + '%';
     } 
     else if (state.view === 'alpha') {
         const actionBar = document.getElementById('action-bar');
         const nextBar = document.getElementById('next-letter-bar');
         
-        // Resetowanie widoczności pasków akcji
         actionBar.style.width = '0%';
         actionBar.className = 'action-progress-bar';
 
         if (move === 'left') {
             actionBar.classList.add('bg-green');
-            actionBar.style.width = progressPercent + '%';
-            nextBar.style.opacity = "0.3"; // Przygaszenie pomarańczowego podczas akcji
+            actionBar.style.width = p + '%';
+            nextBar.style.opacity = "0.2";
         } else if (move === 'right') {
             actionBar.classList.add('bg-red');
-            actionBar.style.width = progressPercent + '%';
-            nextBar.style.opacity = "0.3";
+            actionBar.style.width = p + '%';
+            nextBar.style.opacity = "0.2";
         } else {
             nextBar.style.opacity = "1";
-            // Obsługa pasków nawigacji (Menu / Wyślij)
-            if (move === 'up') document.getElementById('bar-up-alpha').style.width = progressPercent + '%';
-            if (move === 'down') document.getElementById('bar-down-alpha').style.width = progressPercent + '%';
+            if (move === 'up') document.getElementById('bar-up-alpha').style.width = p + '%';
+            if (move === 'down') document.getElementById('bar-down-alpha').style.width = p + '%';
         }
 
-        // Aktualizacja paska pomarańczowego (czasu)
         const timePercent = ((ALPHA_CHANGE_TIME - alphaTimer) / ALPHA_CHANGE_TIME) * 100;
         nextBar.style.width = timePercent + '%';
-        
         document.getElementById('sentence').innerText = state.sentence || "---";
     } 
     else if (state.view === 'needs') {
-        if (move === 'left') document.getElementById('bar-left-needs').style.width = progressPercent + '%';
-        if (move === 'up') document.getElementById('bar-up-needs').style.width = progressPercent + '%';
+        if (move === 'left') document.getElementById('bar-left-needs').style.width = p + '%';
+        if (move === 'up') document.getElementById('bar-up-needs').style.width = p + '%';
     }
 }
 
-// Główny interwał czasowy (100ms)
 setInterval(() => {
     if (state.view === 'alpha') {
-        // Czas leci tylko gdy głowa jest prosto
+        // Zmiana litery następuje TYLKO gdy głowa jest prosto
         if (state.dir === 'center') {
             alphaTimer++;
             if (alphaTimer >= ALPHA_CHANGE_TIME) {
@@ -187,8 +179,6 @@ setInterval(() => {
         const activeItem = document.getElementById(`n-${state.needIdx}`);
         if(activeItem) activeItem.classList.add('active');
     }
-    
-    // Płynne odświeżanie UI niezależnie od kamery
     if(state.view === 'alpha') updateUI(state.dir);
 }, 100);
 
