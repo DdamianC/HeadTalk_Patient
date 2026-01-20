@@ -23,7 +23,7 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-ser
 .stage { flex: 1; padding: 60px; display: flex; flex-direction: column; align-items: center; position: relative; }
 .main-title { font-size: 3rem; font-weight: 900; margin-bottom: 50px; color: white; }
 
-.view { display: none; width: 100%; flex-direction: column; align-items: center; }
+.view { display: none; width: 100%; flex-direction: column; align-items: center; position: relative; }
 .view.active { display: flex; }
 
 /* KAFELKI */
@@ -32,7 +32,18 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-ser
 .tile-grid { display: flex; gap: 30px; }
 .tile-sq { width: 315px; height: 230px; text-align: center; }
 .tile-content { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; }
-.progress { position: absolute; bottom: 0; left: 0; height: 10px; background: var(--green); width: 0%; box-shadow: 0 0 15px var(--green); }
+
+/* PROGRESS BARS */
+.progress { 
+    position: absolute; 
+    bottom: 0; 
+    left: 0; 
+    height: 10px; 
+    background: var(--green); 
+    width: 0%; 
+    box-shadow: 0 0 15px var(--green);
+    transition: width 0.1s linear;
+}
 
 /* ALFABET */
 .letter-box { width: 220px; height: 220px; background: var(--accent); border-radius: 40px; font-size: 10rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; }
@@ -45,14 +56,3 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-ser
 
 .nav-hint { margin-top: 40px; color: #535c68; font-weight: bold; letter-spacing: 1px; }
 .footer { position: absolute; bottom: 30px; opacity: 0.2; font-weight: bold; }
-
-
-.view .progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 10px;
-    background: #00ff88;
-    width: 0%;
-    transition: width 0.1s linear;
-}
