@@ -20,8 +20,30 @@ let state = {
 let alphaTimer = 0;
 
 const START_DELAY = 60;
-const CHANGE_TIME = 40;
+const CHANGE_TIME_ALPHA = 15; // 1.5 sekundy
+const CHANGE_TIME_NEEDS = 40; // 4 sekundy
 const DWELL_REQ = 25;
+
+/* ================= AUDIO ALARM ================= */
+
+function playAlarm() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = 'square'; // Ostry dźwięk alarmowy
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Ton A5
+    oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
+    
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 1);
+}
 
 /* ================= NEEDS INIT ================= */
 
@@ -59,6 +81,10 @@ function setView(v) {
 
 function execute(dir) {
     if (state.view === 'menu') {
+        if (dir === 'up') {
+            document.getElementById('final-output').innerText = "!!! ALARM !!!";
+            playAlarm(); // URUCHOMIENIE DŹWIĘKU
+        }
         if (dir === 'left') setView('alpha');
         if (dir === 'right') setView('needs');
     }
@@ -84,7 +110,7 @@ function execute(dir) {
     }
 }
 
-/* ================= CAMERA ================= */
+/* ================= CAMERA & FACE MESH ================= */
 
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
@@ -92,8 +118,6 @@ const ctx = canvas.getContext('2d');
 
 canvas.width = 320;
 canvas.height = 240;
-
-/* ================= FACE MESH ================= */
 
 const faceMesh = new FaceMesh({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
@@ -108,33 +132,29 @@ faceMesh.setOptions({
 faceMesh.onResults(res => {
     if (!res.image) return;
 
-    /* ✅ OBRAZ 1:1 – BEZ LUSTRZANIA */
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
 
     if (!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
 
     const lm = res.multiFaceLandmarks[0];
-    const leftEye = lm[33];
-    const rightEye = lm[263];
     const nose = lm[1];
     const forehead = lm[10];
+    const leftFaceEdge = lm[234];
+    const rightFaceEdge = lm[454];
 
     let move = 'center';
+    const faceCenterX = (leftFaceEdge.x + rightFaceEdge.x) / 2;
 
-    const eyeDiffY = leftEye.y - rightEye.y;
-
-    // GÓRA I DÓŁ
     if (nose.y < forehead.y + 0.08) {
         move = 'up';
     } else if (nose.y > forehead.y + 0.19) {
         move = 'down';
     } 
-    // POPRAWKA LEWO/PRAWO
-    else if (eyeDiffY > 0.045) {
-        move = 'right'; // Zmieniono z left na right
-    } else if (eyeDiffY < -0.045) {
-        move = 'left';  // Zmieniono z right na left
+    else if (nose.x < faceCenterX - 0.02) {
+        move = 'left'; 
+    } else if (nose.x > faceCenterX + 0.02) {
+        move = 'right';
     }
 
     if (move !== 'center' && move === state.dir) {
@@ -169,7 +189,7 @@ function updateUI(move) {
         const autoBar = document.getElementById('auto-letter-bar');
         autoBar.style.width =
             state.entryTime < START_DELAY ? '0%' :
-            (alphaTimer / CHANGE_TIME) * 100 + '%';
+            (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
     }
 }
 
@@ -185,23 +205,20 @@ function highlightNeed() {
 
 setInterval(() => {
     if (state.view !== 'alpha' && state.view !== 'needs') return;
-
     if (state.entryTime < START_DELAY) {
         state.entryTime++;
         return;
     }
-
     if (state.dir !== 'center') return;
 
     alphaTimer++;
+    const currentLimit = (state.view === 'alpha') ? CHANGE_TIME_ALPHA : CHANGE_TIME_NEEDS;
 
-    if (alphaTimer >= CHANGE_TIME) {
+    if (alphaTimer >= currentLimit) {
         alphaTimer = 0;
-
         if (state.view === 'alpha') {
             state.alphaIdx = (state.alphaIdx + 1) % letters.length;
         }
-
         if (state.view === 'needs') {
             state.needIdx = (state.needIdx + 1) % needs.length;
             highlightNeed();
