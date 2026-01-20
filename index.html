@@ -8,28 +8,36 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <aside class="sidebar">
         <div class="brand">BCI SYSTEM</div>
         <div id="final-output" class="final-text">Oczekiwanie...</div>
+
         <div class="camera-card">
             <canvas id="cameraCanvas"></canvas>
         </div>
-        <div style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.6;">Damian Cybula | 2026</div>
+
+        <div style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.6;">
+            Damian Cybula | 2026
+        </div>
     </aside>
 
     <main class="stage">
+
         <section id="view-menu" class="view active">
             <div class="tile tile-long alarm">
                 <div class="icon">⬆</div>
                 <h2>ALARM</h2>
                 <div class="progress" id="bar-up-menu"></div>
             </div>
+
             <div class="tile-grid">
                 <div class="tile">
                     <div class="icon">⬅</div>
                     <h2>ALFABET</h2>
                     <div class="progress" id="bar-left-menu"></div>
                 </div>
+
                 <div class="tile">
                     <div class="icon">➡</div>
                     <h2>POTRZEBY</h2>
@@ -43,23 +51,29 @@
                 <div>⬆ POWRÓT (Góra)</div>
                 <div class="progress" id="bar-up-alpha"></div>
             </div>
+
             <div class="alpha-display">
                 <div class="letter-box" id="cur-let">A</div>
+
                 <div class="auto-progress-container">
                     <div class="auto-progress-bar" id="auto-letter-bar"></div>
                 </div>
+
                 <div class="sentence-box" id="sentence">---</div>
             </div>
+
             <div class="tile-grid">
                 <div class="tile">
                     <div style="color: var(--success);">⬅ DODAJ (Lewo)</div>
                     <div class="progress" id="bar-left-alpha"></div>
                 </div>
+
                 <div class="tile">
                     <div style="color: var(--danger);">➡ USUŃ (Prawo)</div>
                     <div class="progress" id="bar-right-alpha"></div>
                 </div>
             </div>
+
             <div class="tile tile-long">
                 <div>⬇ ZATWIERDŹ (Dół)</div>
                 <div class="progress" id="bar-down-alpha"></div>
@@ -71,17 +85,22 @@
                 <div>⬆ POWRÓT (Góra)</div>
                 <div class="progress" id="bar-up-needs"></div>
             </div>
+
             <div class="needs-container" id="needs-grid"></div>
+
             <div class="tile tile-long" style="border: 2px solid var(--success); margin-top: 20px;">
                 <div style="color: var(--success);">⬅ WYBIERZ (Lewo i przytrzymaj)</div>
                 <div class="progress" id="bar-left-needs"></div>
             </div>
         </section>
+
     </main>
 
     <video id="video" style="display:none;" autoplay muted playsinline></video>
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="app.js"></script>
+
 </body>
 </html>
