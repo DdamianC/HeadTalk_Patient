@@ -1,129 +1,141 @@
-const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ "];
-const needsItems = [
-    {id: 1, label: "Picie", icon: "💧"}, {id: 2, label: "Jedzenie", icon: "🍽️"},
-    {id: 3, label: "Leki", icon: "💊"}, {id: 4, label: "Ból", icon: "😫"},
-    {id: 5, label: "Zimno", icon: "❄️"}, {id: 6, label: "Ciepło", icon: "🔥"},
-    {id: 7, label: "Toaleta", icon: "🚽"}, {id: 8, label: "Pomoc", icon: "🆘"},
-    {id: 9, label: "Pozycja", icon: "🛏️"}, {id: 10, label: "Sen", icon: "😴"},
-    {id: 11, label: "Duszność", icon: "🫁"}, {id: 12, label: "Koniec", icon: "🔚"}
-];
-
-let appState = {
-    currentView: 'menu',
-    sentence: '',
-    letterIndex: 0,
-    needIndex: 0,
-    dwellTime: 0,
-    currentDir: 'center'
-};
-
-const DWELL_MAX = 30; // progi czasowe (klatki)
-
-// Inicjalizacja potrzeb
-const needsGrid = document.getElementById('needs-grid');
-needsItems.forEach((item, idx) => {
-    const div = document.createElement('div');
-    div.className = 'need-card';
-    div.id = `need-${idx}`;
-    div.innerHTML = `<span style="font-size: 2.5rem">${item.icon}</span><br>${item.label}`;
-    needsGrid.appendChild(div);
-});
-
-// Automatyczne skanowanie (co 4 sekundy dla potrzeb, co 2 dla liter)
-setInterval(() => {
-    if (appState.currentView === 'alphabet') {
-        appState.letterIndex = (appState.letterIndex + 1) % letters.length;
-        document.getElementById('current-letter').innerText = letters[appState.letterIndex];
-    } else if (appState.currentView === 'needs') {
-        document.querySelectorAll('.need-card').forEach(c => c.classList.remove('active'));
-        appState.needIndex = (appState.needIndex + 1) % needsItems.length;
-        document.getElementById(`need-${appState.needIndex}`).classList.add('active');
-    }
-}, 3000);
-
-function handleDirection(dir) {
-    if (appState.currentView === 'menu') {
-        if (dir === 'left') changeView('alphabet');
-        if (dir === 'right') changeView('needs');
-        if (dir === 'up') alert("ALARM WYSŁANY!");
-    } 
-    else if (appState.currentView === 'alphabet') {
-        if (dir === 'left') { appState.sentence += letters[appState.letterIndex]; updateSentence(); }
-        if (dir === 'right') { appState.sentence = appState.sentence.slice(0, -1); updateSentence(); }
-        if (dir === 'up') changeView('menu');
-        if (dir === 'down') { alert("Wysłano: " + appState.sentence); changeView('menu'); }
-    }
-    else if (appState.currentView === 'needs') {
-        if (dir === 'left') { alert("Potrzeba: " + needsItems[appState.needIndex].label); }
-        if (dir === 'up') changeView('menu');
-        if (dir === 'down') changeView('menu');
-    }
+:root {
+    --bg-gradient: linear-gradient(135deg, #4b908e 0%, #63439e 100%);
+    --side-bg: #9ea1a1;
+    --tile-white: rgba(255, 255, 255, 0.9);
+    --accent-red: #ff5252;
+    --accent-green: #4caf50;
 }
 
-function changeView(viewId) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(`${viewId}-view`).classList.add('active');
-    appState.currentView = viewId;
-    if(viewId === 'menu') appState.sentence = '';
+body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
 }
 
-function updateSentence() {
-    document.getElementById('display-sentence').innerText = appState.sentence || "Zacznij pisać...";
+.app-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    height: 100vh;
 }
 
-// Face Mesh Setup
-const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
-
-faceMesh.onResults(results => {
-    const dot = document.getElementById('status-dot');
-    if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-        dot.classList.remove('active');
-        return;
-    }
-    dot.classList.add('active');
-
-    const lm = results.multiFaceLandmarks[0];
-    const nose = lm[1];
-    const leftEar = lm[234];
-    const rightEar = lm[454];
-
-    // Detekcja wychylenia
-    let dir = 'center';
-    const sensitivity = 0.05;
-    const horizontalMove = (nose.x - leftEar.x) / (rightEar.x - leftEar.x);
-
-    if (horizontalMove < 0.35) dir = 'right';
-    else if (horizontalMove > 0.65) dir = 'left';
-    else if (nose.y < lm[10].y + 0.02) dir = 'up'; // Uproszczone góra/dół
-    else if (nose.y > lm[152].y - 0.15) dir = 'down';
-
-    if (dir !== 'center' && dir === appState.currentDir) {
-        appState.dwellTime++;
-        updateProgressBars(appState.dwellTime / DWELL_MAX * 100);
-    } else {
-        appState.dwellTime = 0;
-        appState.currentDir = dir;
-        updateProgressBars(0);
-    }
-
-    if (appState.dwellTime >= DWELL_MAX) {
-        handleDirection(dir);
-        appState.dwellTime = 0;
-    }
-});
-
-function updateProgressBars(val) {
-    document.querySelectorAll('.progress-bar').forEach(b => b.style.width = '0%');
-    if (appState.currentView === 'menu') {
-        if (appState.currentDir === 'left') document.querySelector('#tile-alphabet .progress-bar').style.width = val + '%';
-        if (appState.currentDir === 'right') document.querySelector('#tile-needs .progress-bar').style.width = val + '%';
-        if (appState.currentDir === 'up') document.querySelector('#tile-alarm .progress-bar').style.width = val + '%';
-    }
+/* SIDEBAR - Szary panel z Twojego rysunku */
+.sidebar {
+    background: var(--side-bg);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 0 50px 50px 0;
+    z-index: 10;
 }
 
-const camera = new Camera(document.getElementById('video'), {
-    onFrame: async () => { await faceMesh.send({image: document.getElementById('video')}); },
-    width: 640, height: 480
-});
-camera.start();
+.status-box {
+    background: black;
+    color: white;
+    padding: 15px;
+    border-radius: 25px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.camera-wrapper {
+    width: 250px;
+    height: 350px;
+    background: #ff5252;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    border: 5px solid #ff5252;
+}
+
+#video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+#output_canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+/* MAIN CONTENT - Gradient */
+.main-screen {
+    background: var(--bg-gradient);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.top-header h1 { font-size: 3.5rem; color: black; margin-bottom: 50px; }
+
+/* TILES */
+.tiles-row { display: flex; gap: 40px; }
+
+.tile {
+    width: 320px; height: 220px;
+    background: var(--tile-white);
+    border-radius: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.alarm-tile {
+    width: 680px; height: 120px;
+    background: var(--tile-white);
+    margin-bottom: 40px;
+    border-radius: 40px;
+}
+
+.tile h2 { font-size: 2.5rem; margin: 0; color: #333; }
+
+.fill-indicator {
+    position: absolute; bottom: 0; left: 0;
+    height: 15px; background: var(--accent-green);
+    width: 0%; transition: width 0.1s linear;
+}
+
+/* ALPHABET VIEW */
+.letter-box {
+    width: 250px; height: 250px;
+    background: var(--accent-red);
+    border-radius: 50px;
+    font-size: 10rem; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    color: black; margin-bottom: 30px;
+}
+
+.sentence-display {
+    width: 80%; background: var(--tile-white);
+    padding: 20px; border-radius: 30px;
+    font-size: 2rem; text-align: center; margin-bottom: 40px;
+}
+
+.action-buttons { display: flex; gap: 20px; }
+.btn {
+    background: white; padding: 20px 40px;
+    border-radius: 30px; font-weight: bold; font-size: 1.2rem;
+    display: flex; align-items: center; gap: 10px;
+}
+
+/* NEEDS GRID */
+.needs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px; margin-bottom: 40px;
+}
+
+.need-tile {
+    width: 140px; height: 140px;
+    background: var(--accent-red);
+    border-radius: 30px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-weight: bold; transition: transform 0.2s;
+}
+
+.need-tile.active { border: 5px solid white; transform: scale(1.1); }
+
+.view { display: none; flex-direction: column; align-items: center; width: 100%; }
+.view.active { display: flex; }
+
+.main-footer { position: absolute; bottom: 20px; font-size: 2rem; font-weight: bold; }
