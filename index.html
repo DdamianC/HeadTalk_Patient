@@ -2,67 +2,51 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>BCI – Komunikacja</title>
+<title>BCI – Pacjent</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="patient.css">
 </head>
-
 <body>
+
+<div id="statusBar">
+  <span id="modeLabel">TRYB: MENU</span>
+  <span>🟢 TRACKING</span>
+</div>
 
 <h1>🧠 BCI Communication System</h1>
 
-<!-- ===== MENU ===== -->
-<div id="menu">
+<section id="menu">
   <div class="tiles">
-    <div class="tile" id="tileAlphabet">
-      ALFABET
-      <div class="progress" id="menuLeft"></div>
-    </div>
-    <div class="tile" id="tileYesNo">
-      TAK / NIE
-      <div class="progress" id="menuRight"></div>
-    </div>
+    <div class="tile" id="menuLeft">ALFABET</div>
+    <div class="tile" id="menuRight">TAK / NIE</div>
   </div>
-</div>
+</section>
 
-<!-- ===== ALFABET ===== -->
-<div id="alphabetView" hidden>
-  <div class="tile back" id="backFromAlphabet">
-    ⬆ POWRÓT DO MENU
-    <div class="progress" id="backProgress"></div>
+<section id="alphabetView" hidden>
+  <div class="letterTile" id="letterTile">A</div>
+  <div class="sentenceBox">
+    <span id="sentence"></span><span class="cursor">▌</span>
   </div>
+  <div class="hint">⬅ dodaj | ➡ usuń | ⬇ wyślij | ⬆ menu</div>
+</section>
 
-  <div class="letterTile" id="letterTile"></div>
-  <div class="progress big" id="alphabetProgress"></div>
-  <div class="sentence" id="sentence"></div>
-</div>
-
-<!-- ===== TAK / NIE ===== -->
-<div id="yesnoView" hidden>
-  <div class="tile back">
-    ⬆ POWRÓT DO MENU
-  </div>
-
-  <div class="question">Czy czujesz się dobrze?</div>
-
+<section id="yesnoView" hidden>
+  <div class="question" id="questionText">Pytanie...</div>
   <div class="tiles">
-    <div class="tile" id="yesTile">
-      TAK
-      <div class="progress" id="yesProgress"></div>
-    </div>
-    <div class="tile" id="noTile">
-      NIE
-      <div class="progress" id="noProgress"></div>
-    </div>
+    <div class="tile yes">TAK</div>
+    <div class="tile no">NIE</div>
   </div>
-</div>
+</section>
 
-<canvas id="cameraCanvas" width="640" height="480"></canvas>
 <video id="video" autoplay muted playsinline hidden></video>
+<canvas id="camCanvas" width="320" height="240"></canvas>
+
+<footer>
+Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script src="patient.js"></script>
-
 </body>
 </html>
