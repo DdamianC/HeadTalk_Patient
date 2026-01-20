@@ -31,8 +31,8 @@ function playAlarm() {
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
 
-    oscillator.type = 'square'; // Ostry dźwięk alarmowy
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Ton A5
+    oscillator.type = 'square'; 
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
     oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
     
     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
@@ -83,7 +83,7 @@ function execute(dir) {
     if (state.view === 'menu') {
         if (dir === 'up') {
             document.getElementById('final-output').innerText = "!!! ALARM !!!";
-            playAlarm(); // URUCHOMIENIE DŹWIĘKU
+            playAlarm();
         }
         if (dir === 'left') setView('alpha');
         if (dir === 'right') setView('needs');
@@ -151,9 +151,10 @@ faceMesh.onResults(res => {
     } else if (nose.y > forehead.y + 0.19) {
         move = 'down';
     } 
-    else if (nose.x < faceCenterX - 0.02) {
+    // POPRAWKA: Zamieniono warunki < i > dla osi X
+    else if (nose.x > faceCenterX + 0.02) {
         move = 'left'; 
-    } else if (nose.x > faceCenterX + 0.02) {
+    } else if (nose.x < faceCenterX - 0.02) {
         move = 'right';
     }
 
