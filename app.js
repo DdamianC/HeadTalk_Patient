@@ -93,7 +93,7 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     
-    // RYSOWANIE LUSTRZANE (Widzisz się jak w lustrze)
+    // RYSOWANIE LUSTRZANE
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(-1, 1);
@@ -109,17 +109,17 @@ faceMesh.onResults(res => {
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // FIX: Teraz eyeDiffY dopasowany do Twojego ruchu "Lustrzanego"
-    // Przekręcasz głowę w swoje LEWO -> Prawa brew idzie do góry względem lewej w Twoim widoku
+    // TOTALNA ZMIANA LOGIKI POZIOMEJ (Zastosowanie odwrócenia osi)
+    // eyeDiffY > 0.045 to teraz RIGHT, a eyeDiffY < -0.045 to teraz LEFT
     const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
     if (nose.y < forehead.y + 0.08) move = 'up'; 
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    // ODWROTNA LOGIKA - Teraz Twoje lewo to wybór LEWEGO kafelka
-    else if (eyeDiffY > 0.045) move = 'left';  
-    else if (eyeDiffY < -0.045) move = 'right'; 
+    // ODRÓCONE KIERUNKI DLA TWOJEGO KOMFORTU:
+    else if (eyeDiffY < -0.045) move = 'left';  
+    else if (eyeDiffY > 0.045) move = 'right'; 
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -166,7 +166,7 @@ function updateUI(move) {
     }
 }
 
-// PĘTLA ZMIANY LITER I POTRZEB
+// PĘTLA ZMIANY LITER I POTRZEB (Naprawiona zmiana litery)
 setInterval(() => {
     if (state.view === 'alpha' || state.view === 'needs') {
         if (state.entryTime < START_DELAY) {
