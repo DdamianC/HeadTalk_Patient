@@ -126,8 +126,8 @@ faceMesh.onResults(res => {
 
     if (nose.y < forehead.y + 0.08) move = 'up';
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    else if (eyeDiffY > 0.045) move = 'left';
-    else if (eyeDiffY < -0.045) move = 'right';
+else if (eyeDiffY > 0.045) move = 'right';
+else if (eyeDiffY < -0.045) move = 'left';
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
