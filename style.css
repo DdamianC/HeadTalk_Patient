@@ -45,3 +45,14 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-ser
 
 .nav-hint { margin-top: 40px; color: #535c68; font-weight: bold; letter-spacing: 1px; }
 .footer { position: absolute; bottom: 30px; opacity: 0.2; font-weight: bold; }
+
+
+.view .progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 10px;
+    background: #00ff88;
+    width: 0%;
+    transition: width 0.1s linear;
+}
