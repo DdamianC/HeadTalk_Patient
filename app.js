@@ -93,6 +93,7 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     
+    // RYSOWANIE LUSTRZANE (Widzisz się jak w lustrze)
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(-1, 1);
@@ -108,15 +109,17 @@ faceMesh.onResults(res => {
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // ODWRÓCONA LOGIKA POZIOMA (eyeDiffY < -0.045 to teraz LEFT)
+    // FIX: Teraz eyeDiffY dopasowany do Twojego ruchu "Lustrzanego"
+    // Przekręcasz głowę w swoje LEWO -> Prawa brew idzie do góry względem lewej w Twoim widoku
     const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
     if (nose.y < forehead.y + 0.08) move = 'up'; 
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    else if (eyeDiffY < -0.045) move = 'left';  
-    else if (eyeDiffY > 0.045) move = 'right'; 
+    // ODWROTNA LOGIKA - Teraz Twoje lewo to wybór LEWEGO kafelka
+    else if (eyeDiffY > 0.045) move = 'left';  
+    else if (eyeDiffY < -0.045) move = 'right'; 
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -157,24 +160,21 @@ function updateUI(move) {
         if (move === 'left') document.getElementById('bar-left-needs').style.width = p + '%';
         if (move === 'up') document.getElementById('bar-up-needs').style.width = p + '%';
         
-        // Dynamiczne podświetlanie kafelków potrzeb
         document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
         const activeItem = document.getElementById(`n-${state.needIdx}`);
         if(activeItem) activeItem.classList.add('active');
     }
 }
 
-// PĘTLA CZASOWA - Odpowiada za zmianę liter i kafelków potrzeb w kółko
+// PĘTLA ZMIANY LITER I POTRZEB
 setInterval(() => {
     if (state.view === 'alpha' || state.view === 'needs') {
         if (state.entryTime < START_DELAY) {
             state.entryTime++;
             return;
         }
-
         if (state.dir === 'center' && state.dwell === 0) {
             autoTimer++;
-            
             if (autoTimer >= CHANGE_TIME) {
                 if (state.view === 'alpha') {
                     state.alphaIdx = (state.alphaIdx + 1) % letters.length;
