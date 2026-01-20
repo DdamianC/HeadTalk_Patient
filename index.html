@@ -12,11 +12,9 @@
             <div class="brand">BCI MENU</div>
             <div class="msg-label">KOMUNIKAT:</div>
             <div id="final-output" class="final-text">Oczekiwanie...</div>
-            
             <div class="camera-card">
                 <canvas id="cameraCanvas"></canvas>
             </div>
-            
             <div class="status-indicator">
                 <span class="dot"></span> System Aktywny
             </div>
@@ -26,23 +24,21 @@
             <h1 class="main-title">System komunikacji</h1>
 
             <section id="view-menu" class="view active">
-                <div class="tile tile-long alarm" id="tile-up">
+                <div class="tile tile-long alarm">
                     <div class="tile-content">⬆ ALARM</div>
                     <div class="progress" id="bar-up-menu"></div>
                 </div>
                 <div class="tile-grid">
-                    <div class="tile tile-sq" id="tile-left">
+                    <div class="tile tile-sq">
                         <div class="tile-content">
                             <h2>ALFABET</h2>
-                            <p>A B C ...</p>
                             <span class="icon">⬅</span>
                         </div>
                         <div class="progress" id="bar-left-menu"></div>
                     </div>
-                    <div class="tile tile-sq" id="tile-right">
+                    <div class="tile tile-sq">
                         <div class="tile-content">
                             <h2>WYBÓR</h2>
-                            <p>POTRZEBY</p>
                             <span class="icon">➡</span>
                         </div>
                         <div class="progress" id="bar-right-menu"></div>
@@ -51,16 +47,30 @@
             </section>
 
             <section id="view-alpha" class="view">
-                <div class="letter-box" id="cur-let">A</div>
-                <div class="sentence-box" id="sentence">---</div>
-                
-                <div class="progress" id="bar-left-alpha"></div> <div class="progress" id="bar-right-alpha"></div> <div class="progress" id="bar-up-alpha"></div> <div class="progress" id="bar-down-alpha"></div> <div class="nav-hint">⬅ Dodaj | ➡ Usuń | ⬇ WYŚLIJ | ⬆ MENU</div>
+                <div class="tile tile-long menu-back">
+                    <div class="tile-content">⬆ POWRÓT DO MENU</div>
+                    <div class="progress" id="bar-up-alpha"></div>
+                </div>
+
+                <div class="alpha-main">
+                    <div class="letter-box" id="cur-let">A</div>
+                    <div class="sentence-box" id="sentence">---</div>
+                    
+                    <div class="progress" id="bar-left-alpha"></div>
+                    <div class="progress" id="bar-right-alpha"></div>
+                    <div class="progress" id="bar-down-alpha"></div>
+                </div>
+                <div class="nav-hint">⬅ Dodaj | ➡ Usuń | ⬇ WYŚLIJ</div>
             </section>
 
             <section id="view-needs" class="view">
+                <div class="tile tile-long menu-back">
+                    <div class="tile-content">⬆ POWRÓT DO MENU</div>
+                    <div class="progress" id="bar-up-needs"></div>
+                </div>
                 <div class="needs-container" id="needs-grid"></div>
-                
-                <div class="progress" id="bar-left-needs"></div> <div class="progress" id="bar-up-needs"></div> <div class="nav-hint">⬅ WYBIERZ | ⬆ MENU</div>
+                <div class="progress" id="bar-left-needs"></div>
+                <div class="nav-hint">⬅ WYBIERZ</div>
             </section>
 
             <footer class="footer">Damian Cybula | Inżynieria Biomedyczna 2026</footer>
