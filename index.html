@@ -2,75 +2,77 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>HeadTalk BCI</title>
+    <title>BCI Communication System</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard">
-        <aside class="sidebar">
-            <div class="brand">BCI SYSTEM</div>
-            <div class="msg-label">OSTATNI KOMUNIKAT:</div>
-            <div id="final-output" class="final-text">Gotowy...</div>
-            <div class="camera-card">
-                <canvas id="cameraCanvas"></canvas>
+    <aside class="sidebar">
+        <div class="brand">BCI MENU</div>
+        <div class="msg-label">KOMUNIKAT:</div>
+        <div id="final-output" class="final-text">Oczekiwanie...</div>
+        
+        <div class="status-indicator">
+            <span style="color: var(--success)">●</span> System Aktywny
+        </div>
+
+        <div class="camera-card">
+            <canvas id="cameraCanvas"></canvas>
+        </div>
+    </aside>
+
+    <main class="stage">
+        <h1 style="margin-bottom: 2rem;">System komunikacji</h1>
+
+        <section id="view-menu" class="view active">
+            <div class="tile tile-long alarm">
+                <div class="tile-content">⬆ ALARM</div>
+                <div class="progress" id="bar-up-menu"></div>
             </div>
-            <div class="status-indicator">● System Aktywny</div>
-            <div class="footer">Damian Cybula | 2026</div>
-        </aside>
+            
+            <div class="tile-grid">
+                <div class="tile">
+                    <span class="icon">⬅</span>
+                    <h2>ALFABET</h2>
+                    <div class="progress" id="bar-left-menu"></div>
+                </div>
+                <div class="tile">
+                    <span class="icon">➡</span>
+                    <h2>WYBÓR</h2>
+                    <div class="progress" id="bar-right-menu"></div>
+                </div>
+            </div>
+        </section>
 
-        <main class="stage">
-            <section id="view-menu" class="view active">
-                <div class="tile tile-long alarm">
-                    <div class="tile-content">⬆ ALARM (Góra)</div>
-                    <div class="progress" id="bar-up-menu"></div>
-                </div>
-                <div class="tile-grid">
-                    <div class="tile">
-                        <h2>ALFABET</h2>
-                        <span style="font-size: 3rem;">⬅</span>
-                        <div class="progress" id="bar-left-menu"></div>
-                    </div>
-                    <div class="tile">
-                        <h2>POTRZEBY</h2>
-                        <span style="font-size: 3rem;">➡</span>
-                        <div class="progress" id="bar-right-menu"></div>
-                    </div>
-                </div>
-            </section>
+        <section id="view-alpha" class="view">
+            <div class="tile tile-long">
+                <div>⬆ POWRÓT DO MENU</div>
+                <div class="progress" id="bar-up-alpha"></div>
+            </div>
 
-            <section id="view-alpha" class="view">
-                <div class="tile tile-long">
-                    <div>⬆ POWRÓT (Góra)</div>
-                    <div class="progress" id="bar-up-alpha"></div>
-                </div>
-                <div class="alpha-main">
-                    <div class="letter-container">
-                        <div id="cur-let">A</div>
-                        <div class="next-letter-progress" id="next-letter-bar"></div>
-                    </div>
-                    <div class="sentence-box" id="sentence">---</div>
-                </div>
-                <div class="action-progress-bar" id="action-bar"></div>
-                <div class="tile-long" style="background: rgba(255,255,255,0.05)">
-                    <div>⬇ WYŚLIJ (Dół)</div>
-                    <div class="progress" id="bar-down-alpha"></div>
-                </div>
-            </section>
+            <div class="alpha-main">
+                <div class="letter-box" id="cur-let">A</div>
+                <div class="sentence-box" id="sentence">---</div>
+            </div>
 
-            <section id="view-needs" class="view">
-                <div class="tile tile-long">
-                    <div>⬆ POWRÓT (Góra)</div>
-                    <div class="progress" id="bar-up-needs"></div>
-                </div>
-                <div class="needs-container" id="needs-grid"></div>
-                <div class="tile tile-long" style="margin-top: 20px;">
-                    <div style="color: var(--success)">⬅ POTWIERDŹ WYBÓR (Lewo)</div>
-                    <div class="progress" id="bar-left-needs"></div>
-                </div>
-            </section>
-        </main>
-    </div>
+            <div class="tile tile-long">
+                <div>⬇ WYŚLIJ</div>
+                <div class="progress" id="bar-down-alpha"></div>
+            </div>
+        </section>
+
+        <section id="view-needs" class="view">
+            <div class="tile tile-long">
+                <div>⬆ POWRÓT DO MENU</div>
+                <div class="progress" id="bar-up-needs"></div>
+            </div>
+            <div class="needs-container" id="needs-grid"></div>
+            <div class="tile tile-long">
+                <div>⬅ WYBIERZ</div>
+                <div class="progress" id="bar-left-needs"></div>
+            </div>
+        </section>
+    </main>
 
     <video id="video" style="display:none;" autoplay muted playsinline></video>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
