@@ -7,8 +7,8 @@ const needs = [
 
 let state = { view: 'menu', dir: 'center', dwell: 0, sentence: "", alphaIdx: 0, needIdx: 0 };
 let alphaTimer = 0;
-const ALPHA_CHANGE_TIME = 40; // ok 4 sekundy na literę
-const DWELL_REQ = 30; // Zwiększyłem do 30, żeby uniknąć przypadkowych akcji
+const ALPHA_CHANGE_TIME = 40; 
+const DWELL_REQ = 25; 
 
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -44,11 +44,7 @@ function execute(dir) {
         if (dir === 'up') playAlarm();
     } 
     else if (state.view === 'alpha') {
-        // BLOKADA: Tylko wyraźny ruch w górę wychodzi do menu
-        if (dir === 'up') {
-            setView('menu');
-            return;
-        } 
+        if (dir === 'up') { setView('menu'); return; } 
         
         if (dir === 'left') {
             state.sentence += letters[state.alphaIdx];
@@ -75,7 +71,8 @@ function execute(dir) {
 
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-    document.getElementById(`view-${v}`).classList.add('active');
+    const target = document.getElementById(`view-${v}`);
+    if(target) target.classList.add('active');
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
@@ -90,9 +87,9 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Rysowanie podglądu z odbiciem lustrzanym
+    // 1. RYSOWANIE LUSTRZANE (Wizualne)
     ctx.save();
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.scale(-1, 1);
     ctx.translate(-canvas.width, 0);
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
@@ -101,22 +98,23 @@ faceMesh.onResults(res => {
     if(!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
 
     const landmarks = res.multiFaceLandmarks[0];
-    const leftEye = landmarks[33]; 
-    const rightEye = landmarks[263];
+    const leftEye = landmarks[33];  // Oko lewe (z perspektywy kamery)
+    const rightEye = landmarks[263]; // Oko prawe (z perspektywy kamery)
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // POPRAWKA LUSTRZANA: Odwracamy logikę eyeDiffY
-    // Jeśli przekręcasz głowę w lewo (Twoje lewo), system musi to tak samo zinterpretować
-    const eyeDiffY = rightEye.y - leftEye.y; 
+    // 2. LOGIKA RUCHU (Zsynchronizowana z lustrem)
+    // Gdy przechylasz głowę w swoje LEWO, odległość Y oczu zmienia się.
+    const eyeDiffY = leftEye.y - rightEye.y; 
     
     let move = 'center';
 
-    // Kalibracja czułości (progi 0.045 i 0.08)
-    if (eyeDiffY < -0.045) move = 'left'; 
-    else if (eyeDiffY > 0.045) move = 'right'; 
-    else if (nose.y < forehead.y + 0.08) move = 'up'; 
-    else if (nose.y > forehead.y + 0.19) move = 'down';
+    // Czułość pionowa (Góra/Dół)
+    if (nose.y < forehead.y + 0.085) move = 'up'; 
+    else if (nose.y > forehead.y + 0.18) move = 'down';
+    // Czułość pozioma (Lewo/Prawo)
+    else if (eyeDiffY < -0.042) move = 'left'; 
+    else if (eyeDiffY > 0.042) move = 'right';
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -135,7 +133,7 @@ faceMesh.onResults(res => {
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
     
-    // Czyścimy paski akcji
+    // Resetuj paski akcji
     document.querySelectorAll('.progress:not(.auto-progress-bar)').forEach(b => b.style.width = '0%');
     
     if (state.view === 'menu') {
@@ -143,12 +141,18 @@ function updateUI(move) {
         if(bar) bar.style.width = p + '%';
     } 
     else if (state.view === 'alpha') {
-        if (move === 'left') document.getElementById('bar-left-alpha').style.width = p + '%';
-        if (move === 'right') document.getElementById('bar-right-alpha').style.width = p + '%';
-        if (move === 'up') document.getElementById('bar-up-alpha').style.width = p + '%';
-        if (move === 'down') document.getElementById('bar-down-alpha').style.width = p + '%';
+        // Paski w widoku alfabetu
+        const barUp = document.getElementById('bar-up-alpha');
+        const barDown = document.getElementById('bar-down-alpha');
+        const barLeft = document.getElementById('bar-left-alpha');
+        const barRight = document.getElementById('bar-right-alpha');
 
-        // Aktualizacja pomarańczowego paska zmiany litery
+        if (move === 'up' && barUp) barUp.style.width = p + '%';
+        if (move === 'down' && barDown) barDown.style.width = p + '%';
+        if (move === 'left' && barLeft) barLeft.style.width = p + '%';
+        if (move === 'right' && barRight) barRight.style.width = p + '%';
+
+        // 3. POMARAŃCZOWY PASEK (Zmiana litery)
         const autoBar = document.getElementById('auto-letter-bar');
         if (autoBar) {
             const timePercent = (alphaTimer / ALPHA_CHANGE_TIME) * 100;
@@ -163,15 +167,16 @@ function updateUI(move) {
     }
 }
 
-// Pętla odliczania czasu dla alfabetu i potrzeb
+// Pętla odliczania alfabetu
 setInterval(() => {
     if (state.view === 'alpha') {
-        // Litera zmienia się tylko, gdy trzymasz głowę prosto (center)
+        // Odliczanie działa tylko gdy głowa jest prosto
         if (state.dir === 'center') {
             alphaTimer++;
             if (alphaTimer >= ALPHA_CHANGE_TIME) {
                 state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-                document.getElementById('cur-let').innerText = letters[state.alphaIdx];
+                const curLetEl = document.getElementById('cur-let');
+                if(curLetEl) curLetEl.innerText = letters[state.alphaIdx];
                 alphaTimer = 0;
             }
         }
