@@ -14,29 +14,22 @@ let state = {
     needIdx: 0 
 };
 
-const DWELL_REQ = 25; // Szybkość ładowania (ok. 1.5 sekundy)
+const DWELL_REQ = 25; // Szybkość ładowania
 
-// Funkcja Alarmu z wyraźniejszym dźwiękiem
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = actx.createOscillator();
     const gain = actx.createGain();
-    
     osc.type = 'square'; 
     osc.frequency.setValueAtTime(600, actx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(1200, actx.currentTime + 0.4);
-    
     gain.gain.setValueAtTime(0.3, actx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.9);
-    
     osc.connect(gain);
     gain.connect(actx.destination);
-    
     osc.start();
-    osc.stop(actx.currentTime + 1);
+    osc.stop(actx.currentTime + 0.8);
 }
 
-// Inicjalizacja Potrzeb
 function initNeeds() {
     const nGrid = document.getElementById('needs-grid');
     if(!nGrid) return;
@@ -56,18 +49,20 @@ function execute(dir) {
         if (dir === 'left') setView('alpha');
         if (dir === 'right') setView('needs');
         if (dir === 'up') playAlarm();
-    } else if (state.view === 'alpha') {
-        if (dir === 'up') setView('menu');
-        if (dir === 'left') state.sentence += letters[state.alphaIdx];
-        if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
-        if (dir === 'down') {
+    } 
+    else if (state.view === 'alpha') {
+        if (dir === 'up') setView('menu'); // POWRÓT DO MENU
+        if (dir === 'left') state.sentence += letters[state.alphaIdx]; // DODAJ
+        if (dir === 'right') state.sentence = state.sentence.slice(0, -1); // USUŃ
+        if (dir === 'down') { // WYŚLIJ
             document.getElementById('final-output').innerText = state.sentence;
             state.sentence = "";
             setView('menu');
         }
-    } else if (state.view === 'needs') {
-        if (dir === 'up') setView('menu');
-        if (dir === 'left') {
+    } 
+    else if (state.view === 'needs') {
+        if (dir === 'up') setView('menu'); // POWRÓT DO MENU
+        if (dir === 'left') { // WYBIERZ
             document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
@@ -80,6 +75,7 @@ function setView(v) {
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
+    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
 }
 
 const faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
@@ -89,30 +85,22 @@ faceMesh.onResults(res => {
     const canvas = document.getElementById('cameraCanvas');
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    
     if(!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
 
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
     const landmarks = res.multiFaceLandmarks[0];
-    
-    // Punkt nosa (1), lewe oko (33), prawe oko (263)
     const nose = landmarks[1];
     const leftEye = landmarks[33];
     const rightEye = landmarks[263];
     const forehead = landmarks[10];
 
-    // OBLICZANIE PRZECHYŁU (TILT) zamiast obrotu
-    // Wykorzystujemy różnicę wysokości między oczami
     const eyeDiffY = leftEye.y - rightEye.y; 
-    
     let move = 'center';
 
-    // Detekcja przechyłu bocznego (głowa w bok)
-    if (eyeDiffY < -0.04) move = 'left'; 
-    else if (eyeDiffY > 0.04) move = 'right'; 
-    // Detekcja góra/dół (bazując na pozycji nosa względem czoła)
-    else if (nose.y < forehead.y + 0.08) move = 'up'; // Zwiększony margines dla ALARMU
-    else if (nose.y > forehead.y + 0.18) move = 'down';
+    if (eyeDiffY < -0.045) move = 'left'; 
+    else if (eyeDiffY > 0.045) move = 'right'; 
+    else if (nose.y < forehead.y + 0.08) move = 'up'; 
+    else if (nose.y > forehead.y + 0.19) move = 'down';
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -133,10 +121,25 @@ function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
     
+    // Dynamiczne przypisanie pasków w zależności od widoku
+    let barId = "";
     if (state.view === 'menu') {
-        if (move === 'left') document.getElementById('bar-left').style.width = p + '%';
-        if (move === 'right') document.getElementById('bar-right').style.width = p + '%';
-        if (move === 'up') document.getElementById('bar-up').style.width = p + '%';
+        if (move === 'left') barId = "bar-left-menu";
+        if (move === 'right') barId = "bar-right-menu";
+        if (move === 'up') barId = "bar-up-menu";
+    } else if (state.view === 'alpha') {
+        if (move === 'left') barId = "bar-left-alpha";
+        if (move === 'right') barId = "bar-right-alpha";
+        if (move === 'up') barId = "bar-up-alpha";
+        if (move === 'down') barId = "bar-down-alpha";
+    } else if (state.view === 'needs') {
+        if (move === 'left') barId = "bar-left-needs";
+        if (move === 'up') barId = "bar-up-needs";
+    }
+
+    if (barId) {
+        const bar = document.getElementById(barId);
+        if(bar) bar.style.width = p + '%';
     }
     
     if (state.view === 'alpha') {
