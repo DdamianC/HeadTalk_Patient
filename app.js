@@ -1,146 +1,144 @@
-const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ "];
+const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", "<-"];
 const needs = [
-    {n: "Woda", i: "💧"}, {n: "Jedzenie", i: "🍽️"}, {n: "Leki", i: "💊"}, {n: "Ból", i: "😫"},
-    {n: "Zimno", i: "❄️"}, {n: "Ciepło", i: "🔥"}, {n: "Toaleta", i: "🚽"}, {n: "Pomoc", i: "🆘"},
-    {n: "Pozycja", i: "🛏️"}, {n: "Sen", i: "😴"}, {n: "Duszność", i: "🫁"}, {n: "Inne", i: "❓"}
+    {t: "Picie", i: "💧"}, {t: "Jedzenie", i: "🍎"}, {t: "Leki", i: "💊"}, {t: "Ból", i: "😫"},
+    {t: "Zimno", i: "❄️"}, {t: "Ciepło", i: "🔥"}, {t: "Pomoc", i: "🆘"}, {t: "Sen", i: "😴"},
+    {t: "Toaleta", i: "🚻"}, {t: "TV", i: "📺"}, {t: "Książka", i: "📖"}, {t: "Światło", i: "💡"}
 ];
 
 let state = {
-    view: "menu",
-    sentence: "",
-    letterIdx: 0,
-    needIdx: 0,
+    view: 'menu',
+    dir: 'center',
     dwell: 0,
-    currentDir: "center",
-    lastActionTime: 0
+    sentence: "",
+    alphaIdx: 0,
+    needIdx: 0
 };
 
-const DWELL_THRESHOLD = 25; // ile klatek trzymać głowę
+const DWELL_TIME = 35; // Czas ładowania
 
-// Inicjalizacja Potrzeb
-const needsGrid = document.getElementById('needs-grid');
-needs.forEach((need, idx) => {
+// Funkcja dźwięku alarmu
+function playAlarmSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+}
+
+// Generowanie potrzeb
+const container = document.getElementById('needs-container');
+needs.forEach((n, i) => {
     const div = document.createElement('div');
     div.className = 'need-item';
-    div.id = `need-${idx}`;
-    div.innerHTML = `<span style="font-size:2rem">${need.i}</span><span>${need.n}</span>`;
-    needsGrid.appendChild(div);
+    div.id = `need-${i}`;
+    div.innerHTML = `<div style="font-size:3rem">${n.i}</div><div>${n.t}</div>`;
+    container.appendChild(div);
 });
 
-// Pętla automatyczna (skanowanie)
-setInterval(() => {
-    if (state.view === "alphabet") {
-        state.letterIdx = (state.letterIdx + 1) % letters.length;
-        document.getElementById('current-letter').innerText = letters[state.letterIdx];
-    } else if (state.view === "needs") {
-        document.querySelectorAll('.need-item').forEach(el => el.classList.remove('highlight'));
-        state.needIdx = (state.needIdx + 1) % needs.length;
-        document.getElementById(`need-${state.needIdx}`).classList.add('highlight');
-    }
-}, 3000); // Zmiana co 3 sekundy
-
-function handleAction(dir) {
-    const now = Date.now();
-    if (now - state.lastActionTime < 1000) return; // Debounce
-
-    if (state.view === "menu") {
-        if (dir === "left") switchView("alphabet");
-        if (dir === "right") switchView("needs");
-        if (dir === "up") alert("⚠️ ALARM WYSŁANY!");
+// Logika Sterowania
+function executeAction(dir) {
+    if (state.view === 'menu') {
+        if (dir === 'left') switchView('alpha');
+        if (dir === 'right') switchView('needs');
+        if (dir === 'up') playAlarmSound();
     } 
-    else if (state.view === "alphabet") {
-        if (dir === "left") {
-            state.sentence += letters[state.letterIdx];
-            updateSentence();
+    else if (state.view === 'alpha') {
+        if (dir === 'left') state.sentence += letters[state.alphaIdx];
+        if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
+        if (dir === 'up') switchView('menu');
+        if (dir === 'down') {
+            document.getElementById('output-final').innerText = state.sentence;
+            state.sentence = ""; 
+            switchView('menu');
         }
-        if (dir === "right") {
-            state.sentence = state.sentence.slice(0, -1);
-            updateSentence();
-        }
-        if (dir === "up") switchView("menu");
-        if (dir === "down") { alert("Wysłano: " + state.sentence); switchView("menu"); }
     }
-    else if (state.view === "needs") {
-        if (dir === "left") {
-            state.sentence = "Potrzebuję: " + needs[state.needIdx].n;
-            alert(state.sentence);
+    else if (state.view === 'needs') {
+        if (dir === 'left') {
+            document.getElementById('output-final').innerText = needs[state.needIdx].t;
+            switchView('menu');
         }
-        if (dir === "up") switchView("menu");
-        if (dir === "down") switchView("menu");
+        if (dir === 'up') switchView('menu');
     }
-
-    state.lastActionTime = now;
 }
 
 function switchView(v) {
-    document.getElementById('menu-section').className = 'hidden';
-    document.getElementById('alphabet-section').className = 'hidden';
-    document.getElementById('needs-section').className = 'hidden';
-    
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(`view-${v}`).classList.add('active');
     state.view = v;
-    document.getElementById(`${v}-section`).className = 'active-view';
-    if(v === 'menu') state.sentence = "";
-}
-
-function updateSentence() {
-    document.getElementById('display-sentence').innerText = state.sentence || "Wpisz tekst...";
+    state.dwell = 0;
 }
 
 // MediaPipe Setup
-const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
+const faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+faceMesh.setOptions({maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5});
 
 faceMesh.onResults(results => {
-    if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-        document.getElementById('status-dot').style.backgroundColor = 'red';
-        return;
-    }
-    document.getElementById('status-dot').style.backgroundColor = '#2ecc71';
-    
-    const landmarks = results.multiFaceLandmarks[0];
-    // Prosta detekcja wychylenia (nos względem uszu)
-    const nose = landmarks[1];
-    const leftEar = landmarks[234];
-    const rightEar = landmarks[454];
-    const topHead = landmarks[10];
-    const chin = landmarks[152];
+    const canvas = document.getElementById('cameraCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) return;
 
-    let dir = "center";
-    const horizontalRatio = (nose.x - leftEar.x) / (rightEar.x - leftEar.x);
-    const verticalRatio = (nose.y - topHead.y) / (chin.y - topHead.y);
+    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+    const nose = results.multiFaceLandmarks[0][1];
+    const top = results.multiFaceLandmarks[0][10];
+    const bottom = results.multiFaceLandmarks[0][152];
 
-    if (horizontalRatio < 0.4) dir = "right"; // Lustrzane odbicie kamery
-    else if (horizontalRatio > 0.6) dir = "left";
-    else if (verticalRatio < 0.45) dir = "up";
-    else if (verticalRatio > 0.65) dir = "down";
+    let move = 'center';
+    // Poprawiona czułość Alarmu (Góra) - nose.y musi być znacznie wyżej
+    if (nose.x > 0.65) move = 'left';
+    else if (nose.x < 0.35) move = 'right';
+    else if (nose.y < top.y + 0.02) move = 'up'; // Bardziej wymagający ruch w górę
+    else if (nose.y > bottom.y - 0.05) move = 'down';
 
-    if (dir !== "center" && dir === state.currentDir) {
+    if (move !== 'center' && move === state.dir) {
         state.dwell++;
-        updateFills(state.dwell / DWELL_THRESHOLD * 100);
     } else {
         state.dwell = 0;
-        state.currentDir = dir;
-        updateFills(0);
+        state.dir = move;
     }
 
-    if (state.dwell >= DWELL_THRESHOLD) {
-        handleAction(dir);
+    if (state.dwell >= DWELL_TIME) {
+        executeAction(move);
         state.dwell = 0;
     }
+
+    updateInterface();
 });
 
-function updateFills(percent) {
-    document.querySelectorAll('.fill').forEach(f => f.style.width = '0%');
-    if (state.view === "menu") {
-        if (state.currentDir === "left") document.querySelector('#tile-alphabet .fill').style.width = percent + '%';
-        if (state.currentDir === "right") document.querySelector('#tile-needs .fill').style.width = percent + '%';
-        if (state.currentDir === "up") document.querySelector('#tile-alarm .fill').style.width = percent + '%';
+function updateInterface() {
+    const p = (state.dwell / DWELL_TIME) * 100;
+    document.querySelectorAll('.progress-fill').forEach(b => b.style.width = '0%');
+    
+    if (state.view === 'menu') {
+        if (state.dir === 'up') document.getElementById('bar-up').style.width = p + '%';
+        if (state.dir === 'left') document.getElementById('bar-left').style.width = p + '%';
+        if (state.dir === 'right') document.getElementById('bar-right').style.width = p + '%';
+    }
+    if (state.view === 'alpha') {
+        document.getElementById('sentence-preview').innerText = state.sentence || "---";
     }
 }
 
-const videoElement = document.getElementById('video');
-const camera = new Camera(videoElement, {
-    onFrame: async () => { await faceMesh.send({image: videoElement}); },
+setInterval(() => {
+    if (state.view === 'alpha') {
+        state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+        document.getElementById('current-letter').innerText = letters[state.alphaIdx];
+    }
+    if (state.view === 'needs') {
+        state.needIdx = (state.needIdx + 1) % needs.length;
+        document.querySelectorAll('.need-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`need-${state.needIdx}`).classList.add('active');
+    }
+}, 3500);
+
+const camera = new Camera(document.getElementById('video'), {
+    onFrame: async () => { await faceMesh.send({image: document.getElementById('video')}) },
     width: 640, height: 480
 });
 camera.start();
