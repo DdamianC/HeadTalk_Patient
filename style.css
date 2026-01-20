@@ -1,102 +1,97 @@
 :root {
-    --bg-gradient: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
-    --tile-bg: rgba(255, 255, 255, 0.7);
-    --accent: #ff4b2b;
-    --success: #2ecc71;
-    --text-dark: #2c3e50;
+    --bg-black: #05070a;
+    --card-dark: #10141d;
+    --accent-red: #ff3b3b;
+    --accent-blue: #00d2ff;
+    --accent-green: #00ff88;
+    --glass: rgba(255, 255, 255, 0.03);
 }
 
 body {
+    background: var(--bg-black);
+    color: white;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     margin: 0;
-    font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
-    background: var(--bg-gradient);
-    height: 100vh;
     overflow: hidden;
-    color: var(--text-dark);
 }
 
-.app-container {
-    display: grid;
-    grid-template-areas: 
-        "header header"
-        "main sidebar"
-        "footer footer";
-    grid-template-columns: 1fr 300px;
-    grid-template-rows: 80px 1fr 40px;
-    height: 100vh;
-}
-
-header {
-    grid-area: header;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 40px;
-    background: rgba(255,255,255,0.2);
-}
-
-.system-title { font-size: 2rem; font-weight: bold; }
-
-/* Sekcje */
-.active-view { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
-.hidden { display: none; }
-
-/* Kafelki Główne */
-.tiles-row { display: flex; gap: 30px; margin-top: 20px; }
-.tile {
-    width: 320px;
-    height: 200px;
-    background: var(--tile-bg);
-    border-radius: 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.8rem;
-    font-weight: bold;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.tile.alarm { width: 670px; height: 100px; background: rgba(255,255,255,0.9); color: var(--accent); }
-
-.fill {
-    position: absolute;
-    left: 0; bottom: 0;
-    width: 0%; height: 100%;
-    background: rgba(46, 204, 113, 0.4);
-    transition: width 0.1s linear;
-}
-
-/* Alfabet */
-.focus-letter { font-size: 12rem; font-weight: 900; color: #fff; text-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-.sentence-bar {
-    width: 80%; background: white; padding: 20px;
-    border-radius: 20px; font-size: 2rem; min-height: 50px; margin: 20px 0;
-}
-
-/* Potrzeby */
-.needs-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    padding: 20px;
-}
-.need-item {
-    width: 140px; height: 140px; background: #ff7675;
-    border-radius: 20px; display: flex; flex-direction: column;
-    justify-content: center; align-items: center; color: white;
-    transition: transform 0.3s;
-}
-.need-item.highlight { transform: scale(1.15); border: 5px solid white; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+.app-layout { display: flex; height: 100vh; }
 
 /* Sidebar */
-.sidebar { grid-area: sidebar; padding: 20px; background: rgba(0,0,0,0.05); }
-.camera-box { position: relative; width: 100%; border-radius: 20px; overflow: hidden; }
-#video { width: 100%; transform: scaleX(-1); }
-#output_canvas { position: absolute; top:0; left:0; width: 100%; }
+.sidebar-modern {
+    width: 380px;
+    background: var(--card-dark);
+    padding: 40px 25px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
 
-footer { grid-area: footer; text-align: center; font-size: 0.8rem; padding: 10px; }
+.brand { font-weight: 800; font-size: 1.8rem; letter-spacing: 2px; color: var(--accent-blue); margin-bottom: 30px; }
 
-.nav-hint { background: rgba(255,255,255,0.5); padding: 10px 30px; border-radius: 50px; font-weight: bold; }
+.message-display {
+    background: #000;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+    border-left: 4px solid var(--accent-green);
+}
+
+.glow-text { color: var(--accent-green); font-size: 1.4rem; font-weight: bold; margin-top: 10px; }
+
+.camera-card {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 25px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+#cameraCanvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+/* Main UI */
+.content-area { flex: 1; padding: 60px; position: relative; }
+
+.tile {
+    background: var(--glass);
+    border-radius: 35px;
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.alarm-tile { height: 160px; margin-bottom: 40px; background: rgba(255, 59, 59, 0.05); }
+.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.nav-tile { height: 320px; }
+
+.progress-fill {
+    position: absolute; bottom: 0; left: 0; height: 8px;
+    background: var(--accent-green); width: 0%;
+    box-shadow: 0 0 15px var(--accent-green);
+}
+
+/* Alfabet & Needs */
+.letter-box {
+    font-size: 12rem; font-weight: 800; color: var(--accent-red);
+    background: var(--glass); width: 260px; height: 260px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 40px; margin-bottom: 30px;
+}
+
+.sentence-bar {
+    width: 100%; padding: 30px; background: var(--glass);
+    border-radius: 25px; font-size: 2.5rem; text-align: center;
+}
+
+.needs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 100%; }
+.need-item {
+    background: var(--glass); padding: 25px; border-radius: 20px;
+    text-align: center; border: 2px solid transparent; transition: 0.3s;
+}
+.need-item.active { border-color: var(--accent-green); background: rgba(0, 255, 136, 0.1); }
+
+.nav-legend { display: flex; gap: 40px; margin-top: 50px; color: rgba(255,255,255,0.4); font-weight: bold; }
+.legal-footer { position: absolute; bottom: 30px; left: 60px; opacity: 0.3; font-size: 0.9rem; }
