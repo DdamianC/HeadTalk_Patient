@@ -124,16 +124,17 @@ faceMesh.onResults(res => {
 
     const eyeDiffY = leftEye.y - rightEye.y;
 
+    // GÓRA I DÓŁ
     if (nose.y < forehead.y + 0.08) {
         move = 'up';
     } else if (nose.y > forehead.y + 0.19) {
         move = 'down';
-    } else if (eyeDiffY > 0.045) {
-        // Zmieniono z 'right' na 'left'
-        move = 'left';
+    } 
+    // POPRAWKA LEWO/PRAWO
+    else if (eyeDiffY > 0.045) {
+        move = 'right'; // Zmieniono z left na right
     } else if (eyeDiffY < -0.045) {
-        // Zmieniono z 'left' na 'right'
-        move = 'right';
+        move = 'left';  // Zmieniono z right na left
     }
 
     if (move !== 'center' && move === state.dir) {
