@@ -4,6 +4,7 @@
     --tile-bg: rgba(255, 255, 255, 0.05);
     --accent: #ff4757;
     --green: #00ff88;
+    --orange: #ffa500;
 }
 
 * { box-sizing: border-box; }
@@ -29,12 +30,17 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-ser
 
 .progress { position: absolute; bottom: 0; left: 0; height: 8px; background: var(--green); width: 0%; box-shadow: 0 0 15px var(--green); transition: width 0.1s linear; }
 
-/* ALFABET UI */
-.alpha-main { display: flex; flex-direction: column; align-items: center; position: relative; width: 100%; }
-.letter-box { width: 180px; height: 180px; background: var(--accent); border-radius: 30px; font-size: 8rem; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-.sentence-box { width: 700px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; font-size: 2rem; text-align: center; min-height: 80px; }
+/* ALFABET SPECJALNY PASEK */
+.letter-container { position: relative; padding-bottom: 30px; margin-bottom: 20px; }
+.letter-box { width: 180px; height: 180px; background: var(--accent); border-radius: 30px; font-size: 8rem; font-weight: 900; display: flex; align-items: center; justify-content: center; }
 
-/* POTRZEBY UI */
+.next-letter-progress { position: absolute; bottom: 12px; left: 0; height: 6px; background: var(--orange); width: 100%; border-radius: 3px; }
+.action-progress-bar { position: absolute; bottom: 0; left: 0; height: 10px; width: 0%; border-radius: 5px; transition: width 0.1s linear; }
+
+.bg-green { background: var(--green) !important; box-shadow: 0 0 15px var(--green); }
+.bg-red { background: var(--accent) !important; box-shadow: 0 0 15px var(--accent); }
+
+.sentence-box { width: 700px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; font-size: 2rem; text-align: center; min-height: 80px; position: relative; overflow: hidden;}
 .needs-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 10px; }
 .need-item { background: var(--tile-bg); padding: 20px; border-radius: 20px; text-align: center; border: 2px solid transparent; width: 150px; }
 .need-item.active { border-color: var(--green); background: rgba(0, 255, 136, 0.1); }
