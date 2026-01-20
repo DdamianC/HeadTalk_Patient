@@ -13,30 +13,40 @@
   <div id="status">🔴 brak twarzy</div>
 </header>
 
-<!-- ===== MENU ===== -->
+<!-- MENU -->
 <section id="menu">
   <div class="tiles">
-    <div class="tile" id="menuAlphabet">ALFABET<div class="fill"></div></div>
-    <div class="tile" id="menuNeeds">POTRZEBY<div class="fill"></div></div>
+    <div class="tile" id="tileAlphabet">
+      ALFABET
+      <div class="fill"></div>
+    </div>
+
+    <div class="tile" id="tileNeeds">
+      POTRZEBY
+      <div class="fill"></div>
+    </div>
   </div>
-  <div class="tile alarm" id="menuAlarm">
+
+  <div class="tile alarm" id="tileAlarm">
     ⛔ ALARM
     <div class="fill"></div>
   </div>
 </section>
 
-<!-- ===== ALFABET ===== -->
+<!-- ALFABET -->
 <section id="alphabet" hidden>
-  <div class="tile top">⬆ MENU<div class="fill"></div></div>
+  <div class="nav top">⬆ MENU</div>
+
   <div id="letter">A</div>
   <div id="sentence"></div>
-  <div class="tile bottom">⬇ WYŚLIJ<div class="fill"></div></div>
+
+  <div class="nav bottom">⬇ WYŚLIJ</div>
 </section>
 
-<!-- ===== POTRZEBY ===== -->
+<!-- POTRZEBY -->
 <section id="needs" hidden>
   <div class="grid" id="needsGrid"></div>
-  <div class="hint">⬅ wybierz | ➡ anuluj | ⬇ wyślij | ⬆ menu</div>
+  <div class="hint">⬅ wybierz | ⬆ menu | ⬇ wyślij</div>
 </section>
 
 <video id="video" autoplay muted playsinline hidden></video>
