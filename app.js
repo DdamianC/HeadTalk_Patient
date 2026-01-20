@@ -6,7 +6,9 @@ const needs = [
 ];
 
 let state = { view: 'menu', dir: 'center', dwell: 0, sentence: "", alphaIdx: 0, needIdx: 0 };
-const DWELL_REQ = 25; 
+let alphaTimer = 0;
+const ALPHA_CHANGE_TIME = 40; // ok 4 sekundy (licznik 100ms * 40)
+const DWELL_REQ = 25; // czas przytrzymania dla akcji
 
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -43,9 +45,16 @@ function execute(dir) {
         if (dir === 'up') playAlarm();
     } 
     else if (state.view === 'alpha') {
-        if (dir === 'up') setView('menu'); 
-        if (dir === 'left') state.sentence += letters[state.alphaIdx];
-        if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
+        if (dir === 'up') setView('menu'); // POWRÓT DO MENU TYLKO W GÓRĘ
+        
+        if (dir === 'left') {
+            state.sentence += letters[state.alphaIdx];
+            alphaTimer = 0; // resetujemy czas po dodaniu
+        }
+        if (dir === 'right') {
+            state.sentence = state.sentence.slice(0, -1);
+            alphaTimer = 0; // resetujemy czas po usunięciu
+        }
         if (dir === 'down') {
             document.getElementById('final-output').innerText = state.sentence;
             state.sentence = "";
@@ -67,6 +76,7 @@ function setView(v) {
     state.view = v;
     state.dwell = 0;
     state.dir = 'center';
+    alphaTimer = 0;
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
 }
 
@@ -110,43 +120,77 @@ faceMesh.onResults(res => {
 });
 
 function updateUI(move) {
-    const p = (state.dwell / DWELL_REQ) * 100;
-    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+    const progressPercent = (state.dwell / DWELL_REQ) * 100;
     
-    let barId = "";
+    // Resetuj paski menu
+    document.querySelectorAll('.progress').forEach(b => {
+        if (!b.id.includes('next-letter') && !b.id.includes('action-bar')) {
+            b.style.width = '0%';
+        }
+    });
+    
     if (state.view === 'menu') {
-        if (move === 'left') barId = "bar-left-menu";
-        if (move === 'right') barId = "bar-right-menu";
-        if (move === 'up') barId = "bar-up-menu";
-    } else if (state.view === 'alpha') {
-        if (move === 'left') barId = "bar-left-alpha";
-        if (move === 'right') barId = "bar-right-alpha";
-        if (move === 'up') barId = "bar-up-alpha";
-        if (move === 'down') barId = "bar-down-alpha";
-    } else if (state.view === 'needs') {
-        if (move === 'left') barId = "bar-left-needs";
-        if (move === 'up') barId = "bar-up-needs";
-    }
+        let barId = `bar-${move}-menu`;
+        let bar = document.getElementById(barId);
+        if(bar) bar.style.width = progressPercent + '%';
+    } 
+    else if (state.view === 'alpha') {
+        const actionBar = document.getElementById('action-bar');
+        const nextBar = document.getElementById('next-letter-bar');
+        
+        // Resetowanie widoczności pasków akcji
+        actionBar.style.width = '0%';
+        actionBar.className = 'action-progress-bar';
 
-    const bar = document.getElementById(barId);
-    if(bar) bar.style.width = p + '%';
-    
-    if (state.view === 'alpha') {
+        if (move === 'left') {
+            actionBar.classList.add('bg-green');
+            actionBar.style.width = progressPercent + '%';
+            nextBar.style.opacity = "0.3"; // Przygaszenie pomarańczowego podczas akcji
+        } else if (move === 'right') {
+            actionBar.classList.add('bg-red');
+            actionBar.style.width = progressPercent + '%';
+            nextBar.style.opacity = "0.3";
+        } else {
+            nextBar.style.opacity = "1";
+            // Obsługa pasków nawigacji (Menu / Wyślij)
+            if (move === 'up') document.getElementById('bar-up-alpha').style.width = progressPercent + '%';
+            if (move === 'down') document.getElementById('bar-down-alpha').style.width = progressPercent + '%';
+        }
+
+        // Aktualizacja paska pomarańczowego (czasu)
+        const timePercent = ((ALPHA_CHANGE_TIME - alphaTimer) / ALPHA_CHANGE_TIME) * 100;
+        nextBar.style.width = timePercent + '%';
+        
         document.getElementById('sentence').innerText = state.sentence || "---";
+    } 
+    else if (state.view === 'needs') {
+        if (move === 'left') document.getElementById('bar-left-needs').style.width = progressPercent + '%';
+        if (move === 'up') document.getElementById('bar-up-needs').style.width = progressPercent + '%';
     }
 }
 
+// Główny interwał czasowy (100ms)
 setInterval(() => {
     if (state.view === 'alpha') {
-        state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-        document.getElementById('cur-let').innerText = letters[state.alphaIdx];
+        // Czas leci tylko gdy głowa jest prosto
+        if (state.dir === 'center') {
+            alphaTimer++;
+            if (alphaTimer >= ALPHA_CHANGE_TIME) {
+                state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+                document.getElementById('cur-let').innerText = letters[state.alphaIdx];
+                alphaTimer = 0;
+            }
+        }
     } else if (state.view === 'needs') {
         state.needIdx = (state.needIdx + 1) % needs.length;
         document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
         const activeItem = document.getElementById(`n-${state.needIdx}`);
         if(activeItem) activeItem.classList.add('active');
     }
-}, 3500);
+    
+    // Płynne odświeżanie UI niezależnie od kamery
+    if(state.view === 'alpha') updateUI(state.dir);
+}, 100);
 
 const cam = new Camera(document.getElementById('video'), {
     onFrame: async () => { await faceMesh.send({image: document.getElementById('video')}) },
