@@ -1,20 +1,12 @@
 const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", "<-"];
 const needs = [
     {t: "Picie", i: "💧"}, {t: "Jedzenie", i: "🍎"}, {t: "Leki", i: "💊"}, {t: "Ból", i: "😫"},
-    {t: "Zimno", i: "❄️"}, {t: "Ciepło", i: "🔥"}, {t: "Pomoc", i: "🆘"}, {t: "Toaleta", i: "🚻"},
-    {t: "TV", i: "📺"}, {t: "Książka", i: "📖"}, {t: "Światło", i: "💡"}, {t: "Sen", i: "😴"}
+    {t: "Zimno", i: "❄️"}, {t: "Pomoc", i: "🆘"}, {t: "TV", i: "📺"}, {t: "Toaleta", i: "🚻"},
+    {t: "Książka", i: "📖"}, {t: "Sen", i: "😴"}
 ];
 
-let state = { 
-    view: 'menu', 
-    dir: 'center', 
-    dwell: 0, 
-    sentence: "", 
-    alphaIdx: 0, 
-    needIdx: 0 
-};
-
-const DWELL_REQ = 25; // Szybkość ładowania
+let state = { view: 'menu', dir: 'center', dwell: 0, sentence: "", alphaIdx: 0, needIdx: 0 };
+const DWELL_REQ = 25; 
 
 function playAlarm() {
     const actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -38,7 +30,7 @@ function initNeeds() {
         const d = document.createElement('div');
         d.className = 'need-item';
         d.id = `n-${i}`;
-        d.innerHTML = `<div style="font-size:3rem; margin-bottom:10px;">${n.i}</div>${n.t}`;
+        d.innerHTML = `<div style="font-size:2.5rem">${n.i}</div>${n.t}`;
         nGrid.appendChild(d);
     });
 }
@@ -51,18 +43,18 @@ function execute(dir) {
         if (dir === 'up') playAlarm();
     } 
     else if (state.view === 'alpha') {
-        if (dir === 'up') setView('menu'); // POWRÓT DO MENU
-        if (dir === 'left') state.sentence += letters[state.alphaIdx]; // DODAJ
-        if (dir === 'right') state.sentence = state.sentence.slice(0, -1); // USUŃ
-        if (dir === 'down') { // WYŚLIJ
+        if (dir === 'up') setView('menu'); 
+        if (dir === 'left') state.sentence += letters[state.alphaIdx];
+        if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
+        if (dir === 'down') {
             document.getElementById('final-output').innerText = state.sentence;
             state.sentence = "";
             setView('menu');
         }
     } 
     else if (state.view === 'needs') {
-        if (dir === 'up') setView('menu'); // POWRÓT DO MENU
-        if (dir === 'left') { // WYBIERZ
+        if (dir === 'up') setView('menu');
+        if (dir === 'left') {
             document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
@@ -89,9 +81,9 @@ faceMesh.onResults(res => {
 
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
     const landmarks = res.multiFaceLandmarks[0];
-    const nose = landmarks[1];
     const leftEye = landmarks[33];
     const rightEye = landmarks[263];
+    const nose = landmarks[1];
     const forehead = landmarks[10];
 
     const eyeDiffY = leftEye.y - rightEye.y; 
@@ -121,7 +113,6 @@ function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
     
-    // Dynamiczne przypisanie pasków w zależności od widoku
     let barId = "";
     if (state.view === 'menu') {
         if (move === 'left') barId = "bar-left-menu";
@@ -137,10 +128,8 @@ function updateUI(move) {
         if (move === 'up') barId = "bar-up-needs";
     }
 
-    if (barId) {
-        const bar = document.getElementById(barId);
-        if(bar) bar.style.width = p + '%';
-    }
+    const bar = document.getElementById(barId);
+    if(bar) bar.style.width = p + '%';
     
     if (state.view === 'alpha') {
         document.getElementById('sentence').innerText = state.sentence || "---";
