@@ -1,76 +1,74 @@
 :root {
-    --gradient: linear-gradient(135deg, #4b908e 0%, #63439e 100%);
-    --sidebar-color: #9ea1a1;
-    --card-white: rgba(255, 255, 255, 0.9);
-    --red-accent: #ff5252;
+    --grad: linear-gradient(135deg, #4b908e 0%, #63439e 100%);
+    --side: #9ea1a1;
+    --red: #ff5252;
 }
 
-* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #eee; }
+body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; overflow: hidden; }
 
-.container { display: flex; height: 100vh; }
+.dashboard { display: flex; height: 100vh; }
 
 /* SIDEBAR */
-.sidebar {
-    width: 320px; background: var(--sidebar-color);
+.side-panel {
+    width: 300px; background: var(--side);
     padding: 20px; display: flex; flex-direction: column; align-items: center;
-    border-radius: 0 40px 40px 0; z-index: 100;
+    border-radius: 0 40px 40px 0;
 }
 
-.top-label { background: black; color: white; padding: 10px 20px; border-radius: 20px; margin-bottom: 20px; }
-.avatar-box { font-size: 3rem; margin-bottom: 20px; }
+.msg-bubble { background: black; color: white; padding: 10px 15px; border-radius: 20px; margin-bottom: 20px; }
+.avatar-circle { font-size: 3rem; margin-bottom: 20px; }
 
-.video-container {
-    width: 260px; height: 340px; background: var(--red-accent);
-    border-radius: 40px; border: 5px solid var(--red-accent);
+.camera-box {
+    width: 240px; height: 320px; background: var(--red);
+    border-radius: 40px; border: 5px solid var(--red);
     overflow: hidden; position: relative;
 }
 video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
-/* MAIN CONTENT */
-.main-content {
-    flex: 1; background: var(--gradient); padding: 40px;
-    display: flex; flex-direction: column; align-items: center; position: relative;
+/* MAIN */
+.main-stage {
+    flex: 1; background: var(--grad);
+    display: flex; flex-direction: column; align-items: center; padding: 40px; position: relative;
 }
 
-.main-title { font-size: 3.5rem; color: black; margin-bottom: 40px; }
+.app-title { font-size: 3.5rem; color: black; margin-bottom: 30px; }
 
 .view { display: none; width: 100%; flex-direction: column; align-items: center; }
 .view.active { display: flex; }
 
-/* KAFELKI MENU */
-.card {
-    background: var(--card-white); border-radius: 40px;
-    position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+/* KAFELKI */
+.tile {
+    background: rgba(255,255,255,0.9); border-radius: 40px;
+    position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
-.long-card { width: 600px; height: 100px; margin-bottom: 30px; font-size: 2.5rem; font-weight: bold; }
-.row { display: flex; gap: 30px; }
-.square-card { width: 285px; height: 200px; text-align: center; }
+.tile-long { width: 650px; height: 100px; margin-bottom: 25px; font-size: 2.5rem; font-weight: bold; }
+.tile-grid { display: flex; gap: 25px; }
+.tile-sq { width: 312px; height: 210px; text-align: center; }
 
-.loader { position: absolute; bottom: 0; left: 0; height: 12px; background: #4caf50; width: 0%; }
+.tile-content { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.progress { position: absolute; bottom: 0; left: 0; height: 10px; background: #4caf50; width: 0%; }
 
 /* ALFABET */
-.big-letter-box {
-    width: 240px; height: 240px; background: var(--red-accent);
+.letter-box {
+    width: 220px; height: 220px; background: var(--red);
     border-radius: 40px; font-size: 10rem; font-weight: bold;
-    display: flex; justify-content: center; align-items: center; margin-bottom: 30px;
+    display: flex; justify-content: center; align-items: center; margin-bottom: 20px;
 }
-.text-output {
-    width: 80%; background: white; padding: 25px; border-radius: 30px;
-    font-size: 2.2rem; text-align: center; margin-bottom: 40px;
+.sentence-box {
+    width: 80%; background: white; padding: 20px; border-radius: 30px;
+    font-size: 2.5rem; text-align: center; margin-bottom: 30px;
 }
 
 /* POTRZEBY */
-.needs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 40px; }
-.need-box {
-    width: 140px; height: 140px; background: var(--red-accent); border-radius: 30px;
+.needs-layout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+.need-card {
+    width: 140px; height: 140px; background: var(--red); border-radius: 30px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-weight: bold; transition: 0.2s;
+    font-weight: bold;
 }
-.need-box.active { border: 5px solid white; transform: scale(1.1); }
+.need-card.active { border: 5px solid white; transform: scale(1.1); }
 
-.bottom-nav { display: flex; gap: 20px; }
-.nav-item { background: white; padding: 15px 35px; border-radius: 30px; font-weight: bold; }
-.nav-item.grey { background: #ccc; }
+.actions { display: flex; gap: 20px; }
+.action-btn { background: white; padding: 15px 30px; border-radius: 30px; font-weight: bold; }
 
-.footer-name { position: absolute; bottom: 20px; font-weight: bold; font-size: 1.8rem; }
+.footer { position: absolute; bottom: 20px; font-size: 2rem; font-weight: bold; }
