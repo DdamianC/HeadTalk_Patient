@@ -1,170 +1,146 @@
-const video = document.getElementById("video");
-const canvas = document.getElementById("cameraCanvas");
-const ctx = canvas.getContext("2d");
+const DB="https://bci-komunikacja-default-rtdb.europe-west1.firebasedatabase.app";
 
-const menu = document.getElementById("menu");
-const alphabetView = document.getElementById("alphabetView");
-const yesnoView = document.getElementById("yesnoView");
+const letters=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+let li=0, sentence="", view="menu";
+let neutralX=null, neutralY=null, current="center";
 
-const tileAlphabet = document.getElementById("tileAlphabet");
-const tileYesNo = document.getElementById("tileYesNo");
+const video=document.getElementById("video");
+const canvas=document.getElementById("camCanvas");
+const ctx=canvas.getContext("2d");
 
-const menuLeft = document.getElementById("menuLeft");
-const menuRight = document.getElementById("menuRight");
+const letterTile=document.getElementById("letterTile");
+const sentenceEl=document.getElementById("sentence");
 
-const letterTile = document.getElementById("letterTile");
-const alphabetProgress = document.getElementById("alphabetProgress");
-const sentenceEl = document.getElementById("sentence");
-const backProgress = document.getElementById("backProgress");
+function setMode(m){
+ document.getElementById("modeLabel").innerText="TRYB: "+m;
+}
 
-const yesTile = document.getElementById("yesTile");
-const noTile = document.getElementById("noTile");
-const yesProgress = document.getElementById("yesProgress");
-const noProgress = document.getElementById("noProgress");
-
-let view = "menu";
-let neutralX = null;
-let neutralY = null;
-let currentDir = "center";
-let timer = null;
-
-const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-let letterIndex = 0;
-let sentence = "";
-
-// ===== FACE MESH =====
-const faceMesh = new FaceMesh({
-  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+/* ===== MEDIA PIPE ===== */
+const faceMesh=new FaceMesh({
+ locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
 
-faceMesh.setOptions({
-  maxNumFaces:1,
-  refineLandmarks:false,
-  minDetectionConfidence:0.7,
-  minTrackingConfidence:0.7
-});
-
+faceMesh.setOptions({maxNumFaces:1,minDetectionConfidence:.7});
 faceMesh.onResults(r=>{
-  // ✅ PRAWDZIWE ODBICIE LUSTRZANE
-  ctx.save();
-  ctx.scale(-1,1);
-  ctx.drawImage(r.image,-canvas.width,0,canvas.width,canvas.height);
-  ctx.restore();
+ if(!r.multiFaceLandmarks)return;
 
-  if(!r.multiFaceLandmarks) return;
+ ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+ sendFrame();
 
-  const lm = r.multiFaceLandmarks[0];
-  const nose = lm[1];
-  const eyes = (lm[234].x + lm[454].x)/2;
-  const forehead = lm[10].y;
+ const lm=r.multiFaceLandmarks[0];
+ const nose=lm[1].x;
+ const eyes=(lm[234].x+lm[454].x)/2;
+ const y=lm[10].y;
 
-  if(neutralX===null){
-    neutralX = eyes - nose.x;
-    neutralY = forehead;
-    return;
-  }
+ if(neutralX===null){neutralX=eyes-nose;neutralY=y;return;}
 
-  detect((eyes - nose.x) - neutralX, forehead - neutralY);
+ const dx=(eyes-nose)-neutralX;
+ const dy=y-neutralY;
+
+ let dir="center";
+ if(dx<-0.05)dir="left";
+ else if(dx>0.05)dir="right";
+ else if(dy>0.04)dir="down";
+ else if(dy<-0.04)dir="up";
+
+ if(dir!==current){
+  current=dir;
+  handle(dir);
+ }
 });
 
-// ===== KAMERA (OPTYMALNA) =====
-navigator.mediaDevices.getUserMedia({
-  video:{facingMode:"user",width:480,height:360}
-}).then(stream=>{
-  video.srcObject = stream;
-  const cam = new Camera(video,{
-    onFrame: async()=>await faceMesh.send({image:video}),
-    fps:15
-  });
-  cam.start();
+/* ===== KAMERA ===== */
+navigator.mediaDevices.getUserMedia({video:{width:320,height:240}})
+.then(s=>{
+ video.srcObject=s;
+ const cam=new Camera(video,{
+  onFrame:()=>faceMesh.send({image:video}),
+  fps:10
+ });
+ cam.start();
 });
 
-// ===== DETEKCJA =====
-function detect(x,y){
-  let dir="center";
-  if(x < -0.05) dir="left";
-  else if(x > 0.05) dir="right";
-  else if(y < -0.04) dir="up";
+/* ===== LOGIKA ===== */
+function handle(dir){
+ if(view==="menu"){
+  if(dir==="left") openAlphabet();
+  if(dir==="right") openYesNo();
+ }
 
-  if(dir!==currentDir){
-    currentDir=dir;
-    reset();
-    if(dir!=="center") start(dir);
-  }
+ if(view==="alphabet"){
+  if(dir==="left") sentence+=letterTile.innerText;
+  if(dir==="right") sentence=sentence.slice(0,-1);
+  if(dir==="down") sendSentence();
+  if(dir==="up") backToMenu();
+  sentenceEl.innerText=sentence;
+ }
+
+ if(view==="yesno"){
+  if(dir==="left") sendAnswer("TAK");
+  if(dir==="right") sendAnswer("NIE");
+  if(dir==="up") backToMenu();
+ }
 }
 
-function reset(){
-  clearInterval(timer);
-  document.querySelectorAll(".progress").forEach(p=>p.style.width="0%");
-  document.querySelectorAll(".tile").forEach(t=>t.classList.remove("active"));
+function cycle(){
+ if(view!=="alphabet")return;
+ letterTile.innerText=letters[li];
+ li=(li+1)%letters.length;
+ setTimeout(cycle,2000);
 }
 
-function start(dir){
-  if(view==="menu"){
-    const tile = dir==="left"?tileAlphabet:tileYesNo;
-    const bar = dir==="left"?menuLeft:menuRight;
-    tile.classList.add("active");
-    fill(bar,2000,()=>dir==="left"?openAlphabet():openYesNo());
-  }
-
-  if(view==="alphabet"){
-    if(dir==="up"){
-      fill(backProgress,1500,backToMenu);
-      return;
-    }
-    fill(alphabetProgress,1500,()=>{
-      if(dir==="right") sentence+=letters[letterIndex];
-      if(dir==="left") sentence=sentence.slice(0,-1);
-      sentenceEl.innerText=sentence;
-    });
-  }
-
-  if(view==="yesno"){
-    if(dir==="up") backToMenu();
-    if(dir==="left") fill(yesProgress,1500,backToMenu);
-    if(dir==="right") fill(noProgress,1500,backToMenu);
-  }
-}
-
-function fill(bar,time,done){
-  let w=0;
-  timer=setInterval(()=>{
-    w+=100/(time/100);
-    bar.style.width=w+"%";
-    if(w>=100){
-      clearInterval(timer);
-      bar.style.width="0%";
-      done();
-    }
-  },100);
-}
-
-// ===== WIDOKI =====
 function openAlphabet(){
-  view="alphabet";
-  menu.hidden=true;
-  alphabetView.hidden=false;
-  cycleLetters();
+ view="alphabet"; setMode("ALFABET");
+ document.getElementById("menu").hidden=true;
+ document.getElementById("alphabetView").hidden=false;
+ cycle();
 }
 
 function openYesNo(){
-  view="yesno";
-  menu.hidden=true;
-  yesnoView.hidden=false;
+ view="yesno"; setMode("TAK / NIE");
+ document.getElementById("menu").hidden=true;
+ document.getElementById("yesnoView").hidden=false;
 }
 
 function backToMenu(){
-  view="menu";
-  alphabetView.hidden=true;
-  yesnoView.hidden=true;
-  menu.hidden=false;
+ view="menu"; setMode("MENU");
+ document.getElementById("menu").hidden=false;
+ document.getElementById("alphabetView").hidden=true;
+ document.getElementById("yesnoView").hidden=true;
 }
 
-function cycleLetters(){
-  letterTile.innerText=letters[letterIndex];
-  setTimeout(()=>{
-    if(view!=="alphabet") return;
-    letterIndex=(letterIndex+1)%letters.length;
-    cycleLetters();
-  },3000);
+/* ===== FIREBASE ===== */
+function sendSentence(){
+ fetch(`${DB}/messages.json`,{
+  method:"POST",
+  body:JSON.stringify({text:sentence,time:Date.now()})
+ });
+ sentence="";
+ sentenceEl.innerText="";
+ backToMenu();
 }
+
+function sendAnswer(v){
+ fetch(`${DB}/answers.json`,{
+  method:"POST",
+  body:JSON.stringify({value:v,time:Date.now()})
+ });
+ backToMenu();
+}
+
+/* ===== KAMERA STREAM ===== */
+function sendFrame(){
+ const img=canvas.toDataURL("image/jpeg",0.4);
+ fetch(`${DB}/camera/current.json`,{
+  method:"PUT",
+  body:JSON.stringify({img,time:Date.now()})
+ });
+}
+
+/* ===== PYTANIA ===== */
+async function loadQ(){
+ const r=await fetch(`${DB}/questions/current.json`);
+ const d=await r.json();
+ if(d) document.getElementById("questionText").innerText=d.text;
+}
+setInterval(loadQ,2000);
