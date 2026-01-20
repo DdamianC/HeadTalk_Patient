@@ -23,22 +23,22 @@ const START_DELAY = 60;
 const CHANGE_TIME = 40;
 const DWELL_REQ = 25;
 
-/* ================== NEEDS INIT ================== */
+/* ================= NEEDS INIT ================= */
 
 function initNeeds() {
-    const nGrid = document.getElementById('needs-grid');
-    nGrid.innerHTML = '';
+    const grid = document.getElementById('needs-grid');
+    grid.innerHTML = '';
     needs.forEach((n, i) => {
         const d = document.createElement('div');
         d.className = 'need-item';
         d.id = `n-${i}`;
         d.innerHTML = `<div style="font-size:2.5rem">${n.i}</div>${n.t}`;
-        nGrid.appendChild(d);
+        grid.appendChild(d);
     });
 }
 initNeeds();
 
-/* ================== VIEW ================== */
+/* ================= VIEW ================= */
 
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
@@ -55,7 +55,7 @@ function setView(v) {
     if (v === 'needs') highlightNeed();
 }
 
-/* ================== EXECUTE ================== */
+/* ================= EXECUTE ================= */
 
 function execute(dir) {
     if (state.view === 'menu') {
@@ -84,7 +84,7 @@ function execute(dir) {
     }
 }
 
-/* ================== CAMERA ================== */
+/* ================= CAMERA ================= */
 
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
@@ -93,7 +93,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = 320;
 canvas.height = 240;
 
-/* ================== FACE MESH ================== */
+/* ================= FACE MESH ================= */
 
 const faceMesh = new FaceMesh({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
@@ -108,10 +108,9 @@ faceMesh.setOptions({
 faceMesh.onResults(res => {
     if (!res.image) return;
 
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(res.image, -canvas.width, 0, canvas.width, canvas.height);
-    ctx.restore();
+    /* ✅ OBRAZ 1:1 – BEZ LUSTRZANIA */
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
 
     if (!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
 
@@ -123,7 +122,7 @@ faceMesh.onResults(res => {
 
     let move = 'center';
 
-    const eyeDiffY = leftEye.y - rightEye.y; // ✅ POPRAWNE KIERUNKI
+    const eyeDiffY = leftEye.y - rightEye.y;
 
     if (nose.y < forehead.y + 0.08) move = 'up';
     else if (nose.y > forehead.y + 0.19) move = 'down';
@@ -145,7 +144,7 @@ faceMesh.onResults(res => {
     updateUI(move);
 });
 
-/* ================== UI ================== */
+/* ================= UI ================= */
 
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
@@ -166,7 +165,7 @@ function updateUI(move) {
     }
 }
 
-/* ================== NEEDS UI ================== */
+/* ================= NEEDS ================= */
 
 function highlightNeed() {
     document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
@@ -174,7 +173,7 @@ function highlightNeed() {
     if (el) el.classList.add('active');
 }
 
-/* ================== TIMER ================== */
+/* ================= TIMER ================= */
 
 setInterval(() => {
     if (state.view !== 'alpha' && state.view !== 'needs') return;
@@ -202,7 +201,7 @@ setInterval(() => {
     }
 }, 100);
 
-/* ================== CAMERA START ================== */
+/* ================= CAMERA START ================= */
 
 const cam = new Camera(video, {
     onFrame: async () => {
