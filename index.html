@@ -2,75 +2,85 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BCI System</title>
+    <title>BCI Communication Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard">
-        <aside class="side-panel">
-            <div class="msg-bubble">Wiadomość od pacjenta</div>
-            <div class="avatar-circle">🍎</div>
-            <div class="camera-box">
-                <video id="video" autoplay muted playsinline></video>
-                <canvas id="output_canvas"></canvas>
-            </div>
-            <div class="cam-status">
-                <span id="dot"></span> kamera <strong id="current-view-name">MENU</strong>
-            </div>
-        </aside>
 
-        <main class="main-stage">
-            <h1 class="app-title">System komunikacji</h1>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="msg-box">Wiadomość od pacjenta</div>
+        <div class="avatar">🍎</div>
+        
+        <div class="camera-wrap">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="cameraCanvas" width="640" height="480"></canvas>
+        </div>
+        
+        <div class="status">
+            <span id="dot"></span> kamera <strong id="view-label">MENU</strong>
+        </div>
+    </aside>
 
-            <div id="view-menu" class="view active">
-                <div class="tile tile-long" id="btn-alarm">
-                    <div class="tile-content"><span class="arrow-up">⬆</span> ALARM</div>
-                    <div class="progress"></div>
-                </div>
-                <div class="tile-grid">
-                    <div class="tile tile-sq" id="btn-alphabet">
-                        <div class="tile-content">
-                            <h2>ALFABET</h2>
-                            <p>A B C ...</p>
-                            <span class="arrow-left">⬅</span>
-                        </div>
-                        <div class="progress"></div>
+    <main class="main-content">
+        <h1 class="title">System komunikacji</h1>
+
+        <section id="menu-view" class="view active">
+            <div class="tile alarm" id="tile-alarm">
+                <div class="tile-inner"><span>⬆</span> ALARM</div>
+                <div class="progress-bar" id="bar-alarm"></div>
+            </div>
+            
+            <div class="tile-row">
+                <div class="tile square" id="tile-alphabet">
+                    <div class="tile-inner">
+                        <h2>ALFABET</h2>
+                        <p>A B C...</p>
+                        <span class="arrow">⬅</span>
                     </div>
-                    <div class="tile tile-sq" id="btn-needs">
-                        <div class="tile-content">
-                            <h2>Wybór</h2>
-                            <div class="icons-row">⏹⏹⏹</div>
-                            <span class="arrow-right">➡</span>
-                        </div>
-                        <div class="progress"></div>
+                    <div class="progress-bar" id="bar-alphabet"></div>
+                </div>
+                
+                <div class="tile square" id="tile-needs">
+                    <div class="tile-inner">
+                        <h2>Wybór</h2>
+                        <div class="icons">⏹⏹⏹</div>
+                        <span class="arrow">➡</span>
                     </div>
+                    <div class="progress-bar" id="bar-needs"></div>
                 </div>
             </div>
+        </section>
 
-            <div id="view-alphabet" class="view">
-                <div class="letter-box" id="active-letter">A</div>
-                <div class="sentence-box" id="sentence-out">Tu się tworzy zdanie</div>
-                <div class="actions">
-                    <div class="action-btn">Dodaj do ekranu głównego <span>⬇</span></div>
-                    <div class="action-btn grey">Wróć do menu <span>⬆</span></div>
-                </div>
+        <section id="alphabet-view" class="view">
+            <div class="focus-letter" id="alphabetGrid">A</div>
+            <div class="sentence-box" id="sentenceOutput">Zacznij pisać...</div>
+            <div class="nav-hints">
+                <div class="hint">Dodaj do ekranu głównego <span>⬇</span></div>
+                <div class="hint grey">Wróć do menu <span>⬆</span></div>
             </div>
+            <div class="global-progress"><div id="alphabetProgress"></div></div>
+        </section>
 
-            <div id="view-needs" class="view">
-                <h2 class="view-title">Wybierz co potrzebujesz</h2>
-                <div class="needs-layout" id="needs-container"></div>
-                <div class="actions">
-                    <div class="action-btn">Dodaj do ekranu głównego <span>⬇</span></div>
-                    <div class="action-btn grey">Wróć do menu <span>⬆</span></div>
+        <section id="needs-view" class="view">
+            <h2 class="grid-title">Wybierz co potrzebujesz</h2>
+            <div class="needs-grid" id="needsGrid">
                 </div>
+            <div class="nav-hints">
+                <div class="hint">Zatwierdź <span>⬇</span></div>
+                <div class="hint grey">Wróć do menu <span>⬆</span></div>
             </div>
+        </section>
 
-            <div class="footer">Damian Cybula itd</div>
-        </main>
-    </div>
+        <footer class="footer">
+            Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
+        </footer>
+    </main>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
