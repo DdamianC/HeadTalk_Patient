@@ -1,123 +1,76 @@
 :root {
-    --bg-gradient: linear-gradient(135deg, #4b908e 0%, #63439e 100%);
-    --side-grey: #9ea1a1;
-    --tile-white: rgba(255, 255, 255, 0.95);
-    --accent-red: #ff5252;
-    --accent-green: #2ecc71;
+    --gradient: linear-gradient(135deg, #4b908e 0%, #63439e 100%);
+    --sidebar-color: #9ea1a1;
+    --card-white: rgba(255, 255, 255, 0.9);
+    --red-accent: #ff5252;
 }
 
-* { box-sizing: border-box; }
-body, html {
-    margin: 0; padding: 0; height: 100%;
-    font-family: 'Inter', sans-serif;
-    overflow: hidden;
-}
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #eee; }
 
-.app-container {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    height: 100vh;
-}
+.container { display: flex; height: 100vh; }
 
 /* SIDEBAR */
 .sidebar {
-    background: var(--side-grey);
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    border-radius: 0 40px 40px 0;
-    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+    width: 320px; background: var(--sidebar-color);
+    padding: 20px; display: flex; flex-direction: column; align-items: center;
+    border-radius: 0 40px 40px 0; z-index: 100;
 }
 
-.status-box {
-    background: #000; color: #fff;
-    padding: 15px; border-radius: 20px;
-    text-align: center; font-size: 0.9rem;
-}
+.top-label { background: black; color: white; padding: 10px 20px; border-radius: 20px; margin-bottom: 20px; }
+.avatar-box { font-size: 3rem; margin-bottom: 20px; }
 
-.camera-frame {
-    width: 240px; height: 320px;
-    background: var(--accent-red);
-    border-radius: 35px; border: 4px solid var(--accent-red);
+.video-container {
+    width: 260px; height: 340px; background: var(--red-accent);
+    border-radius: 40px; border: 5px solid var(--red-accent);
     overflow: hidden; position: relative;
 }
-
-#video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-#output_canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
 /* MAIN CONTENT */
-.content-area {
-    background: var(--bg-gradient);
-    padding: 40px; display: flex;
-    flex-direction: column; align-items: center;
+.main-content {
+    flex: 1; background: var(--gradient); padding: 40px;
+    display: flex; flex-direction: column; align-items: center; position: relative;
 }
 
-h1 { font-size: 3rem; margin-bottom: 40px; color: #000; }
+.main-title { font-size: 3.5rem; color: black; margin-bottom: 40px; }
 
-.view { display: none; flex-direction: column; align-items: center; width: 100%; }
+.view { display: none; width: 100%; flex-direction: column; align-items: center; }
 .view.active { display: flex; }
 
-/* KAFELKI */
-.tiles-row { display: flex; gap: 30px; }
-.tile {
-    width: 280px; height: 200px;
-    background: var(--tile-white);
-    border-radius: 40px; position: relative;
-    overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+/* KAFELKI MENU */
+.card {
+    background: var(--card-white); border-radius: 40px;
+    position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.long-card { width: 600px; height: 100px; margin-bottom: 30px; font-size: 2.5rem; font-weight: bold; }
+.row { display: flex; gap: 30px; }
+.square-card { width: 285px; height: 200px; text-align: center; }
+
+.loader { position: absolute; bottom: 0; left: 0; height: 12px; background: #4caf50; width: 0%; }
+
+/* ALFABET */
+.big-letter-box {
+    width: 240px; height: 240px; background: var(--red-accent);
+    border-radius: 40px; font-size: 10rem; font-weight: bold;
+    display: flex; justify-content: center; align-items: center; margin-bottom: 30px;
+}
+.text-output {
+    width: 80%; background: white; padding: 25px; border-radius: 30px;
+    font-size: 2.2rem; text-align: center; margin-bottom: 40px;
 }
 
-.alarm-tile {
-    width: 590px; height: 110px;
-    background: var(--tile-white);
-    margin-bottom: 30px; border-radius: 30px;
+/* POTRZEBY */
+.needs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 40px; }
+.need-box {
+    width: 140px; height: 140px; background: var(--red-accent); border-radius: 30px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: bold; transition: 0.2s;
 }
+.need-box.active { border: 5px solid white; transform: scale(1.1); }
 
-.tile-inner {
-    height: 100%; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-}
+.bottom-nav { display: flex; gap: 20px; }
+.nav-item { background: white; padding: 15px 35px; border-radius: 30px; font-weight: bold; }
+.nav-item.grey { background: #ccc; }
 
-.progress-fill {
-    position: absolute; bottom: 0; left: 0;
-    height: 12px; background: var(--accent-green);
-    width: 0%; transition: width 0.1s linear;
-}
-
-/* ALFABET & POTRZEBY */
-.letter-focus {
-    width: 220px; height: 220px;
-    background: var(--accent-red); border-radius: 45px;
-    font-size: 9rem; font-weight: bold;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 25px;
-}
-
-.sentence-container {
-    width: 80%; background: var(--tile-white);
-    padding: 20px; border-radius: 25px;
-    font-size: 1.8rem; text-align: center; margin-bottom: 30px;
-}
-
-.needs-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 15px; margin-bottom: 30px;
-}
-
-.need-item {
-    width: 130px; height: 130px;
-    background: var(--accent-red); border-radius: 25px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    font-weight: bold; font-size: 0.9rem;
-}
-
-.need-item.highlight { border: 4px solid #fff; transform: scale(1.05); }
-
-.nav-hints { display: flex; gap: 20px; }
-.hint-btn {
-    background: #fff; padding: 15px 30px;
-    border-radius: 25px; font-weight: bold;
-}
-
-.author-footer { position: absolute; bottom: 20px; font-size: 1.5rem; font-weight: bold; }
+.footer-name { position: absolute; bottom: 20px; font-weight: bold; font-size: 1.8rem; }
