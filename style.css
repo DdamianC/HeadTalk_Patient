@@ -1,145 +1,149 @@
-const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", "<-"];
-const needs = [
-    {t: "Picie", i: "💧"}, {t: "Jedzenie", i: "🍎"}, {t: "Leki", i: "💊"}, {t: "Ból", i: "😫"},
-    {t: "Zimno", i: "❄️"}, {t: "Pomoc", i: "🆘"}, {t: "TV", i: "📺"}, {t: "Toaleta", i: "🚻"},
-    {t: "Książka", i: "📖"}, {t: "Sen", i: "😴"}
-];
-
-let state = { view: 'menu', dir: 'center', dwell: 0, sentence: "", alphaIdx: 0, needIdx: 0 };
-let alphaTimer = 0;
-const ALPHA_CHANGE_TIME = 35; // ok 3.5 sekundy
-const DWELL_REQ = 25; 
-
-function playAlarm() {
-    const actx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = actx.createOscillator();
-    const gain = actx.createGain();
-    osc.type = 'square'; osc.frequency.setValueAtTime(600, actx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1200, actx.currentTime + 0.4);
-    gain.gain.setValueAtTime(0.3, actx.currentTime);
-    osc.connect(gain); gain.connect(actx.destination);
-    osc.start(); osc.stop(actx.currentTime + 0.8);
+:root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #38bdf8;
+    --text: #f8fafc;
+    --danger: #ef4444;
+    --success: #22c55e;
 }
 
-function initNeeds() {
-    const nGrid = document.getElementById('needs-grid');
-    if(!nGrid) return;
-    nGrid.innerHTML = ''; 
-    needs.forEach((n, i) => {
-        const d = document.createElement('div');
-        d.className = 'need-item'; d.id = `n-${i}`;
-        d.innerHTML = `<div style="font-size:2.5rem">${n.i}</div>${n.t}`;
-        nGrid.appendChild(d);
-    });
-}
-initNeeds();
-
-function execute(dir) {
-    if (state.view === 'menu') {
-        if (dir === 'left') setView('alpha');
-        if (dir === 'right') setView('needs');
-        if (dir === 'up') playAlarm();
-    } 
-    else if (state.view === 'alpha') {
-        if (dir === 'up') setView('menu'); 
-        if (dir === 'left') state.sentence += letters[state.alphaIdx];
-        if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
-        if (dir === 'down') {
-            document.getElementById('final-output').innerText = state.sentence;
-            state.sentence = "";
-            setView('menu');
-        }
-    } 
-    else if (state.view === 'needs') {
-        if (dir === 'up') setView('menu');
-        if (dir === 'left') {
-            document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
-            setView('menu');
-        }
-    }
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
 }
 
-function setView(v) {
-    document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-    document.getElementById(`view-${v}`).classList.add('active');
-    state.view = v; state.dwell = 0; state.dir = 'center';
-    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+.dashboard {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: 100vh;
 }
 
-const faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5});
-
-faceMesh.onResults(res => {
-    const canvas = document.getElementById('cameraCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
-    ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
-    const landmarks = res.multiFaceLandmarks[0];
-    const leftEye = landmarks[33]; const rightEye = landmarks[263];
-    const nose = landmarks[1]; const forehead = landmarks[10];
-
-    const eyeDiffY = leftEye.y - rightEye.y; 
-    let move = 'center';
-    if (eyeDiffY < -0.045) move = 'left'; 
-    else if (eyeDiffY > 0.045) move = 'right'; 
-    else if (nose.y < forehead.y + 0.08) move = 'up'; 
-    else if (nose.y > forehead.y + 0.19) move = 'down';
-
-    if (move !== 'center' && move === state.dir) state.dwell++;
-    else { state.dwell = 0; state.dir = move; }
-    if (state.dwell >= DWELL_REQ) { execute(move); state.dwell = 0; }
-    updateUI(move);
-});
-
-function updateUI(move) {
-    const p = (state.dwell / DWELL_REQ) * 100;
-    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
-    
-    if (state.view === 'menu') {
-        if (move === 'left') document.getElementById('bar-left-menu').style.width = p + '%';
-        if (move === 'right') document.getElementById('bar-right-menu').style.width = p + '%';
-        if (move === 'up') document.getElementById('bar-up-menu').style.width = p + '%';
-    } 
-    else if (state.view === 'alpha') {
-        const actionBar = document.getElementById('action-bar');
-        actionBar.style.width = '0%';
-        actionBar.className = 'action-progress-bar';
-
-        if (move === 'left') { actionBar.classList.add('bg-green'); actionBar.style.width = p + '%'; }
-        if (move === 'right') { actionBar.classList.add('bg-red'); actionBar.style.width = p + '%'; }
-        if (move === 'up') document.getElementById('bar-up-alpha').style.width = p + '%';
-        if (move === 'down') document.getElementById('bar-down-alpha').style.width = p + '%';
-
-        document.getElementById('sentence').innerText = state.sentence || "---";
-        const nextBar = document.getElementById('next-letter-bar');
-        nextBar.style.width = ((ALPHA_CHANGE_TIME - alphaTimer) / ALPHA_CHANGE_TIME) * 100 + '%';
-    }
-    else if (state.view === 'needs') {
-        if (move === 'left') document.getElementById('bar-left-needs').style.width = p + '%';
-        if (move === 'up') document.getElementById('bar-up-needs').style.width = p + '%';
-    }
+/* Sidebar */
+.sidebar {
+    background: var(--card);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #334155;
+    gap: 1.5rem;
 }
 
-setInterval(() => {
-    if (state.view === 'alpha') {
-        alphaTimer++;
-        if (alphaTimer >= ALPHA_CHANGE_TIME) {
-            state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-            document.getElementById('cur-let').innerText = letters[state.alphaIdx];
-            alphaTimer = 0;
-        }
-    } else if (state.view === 'needs') {
-        state.needIdx = (state.needIdx + 1) % needs.length;
-        document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-        const activeItem = document.getElementById(`n-${state.needIdx}`);
-        if(activeItem) activeItem.classList.add('active');
-    }
-    if(state.view === 'alpha') updateUI(state.dir);
-}, 100);
+.brand { font-size: 1.5rem; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
 
-const cam = new Camera(document.getElementById('video'), {
-    onFrame: async () => { await faceMesh.send({image: document.getElementById('video')}) },
-    width: 640, height: 480
-});
-cam.start();
+.final-text {
+    background: #000;
+    padding: 1.5rem;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    min-height: 60px;
+    border-left: 4px solid var(--accent);
+}
+
+.camera-card {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+#cameraCanvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+/* Main Stage */
+.stage { padding: 3rem; position: relative; display: flex; flex-direction: column; }
+.view { display: none; flex-direction: column; gap: 2rem; flex-grow: 1; }
+.view.active { display: flex; }
+
+/* Tiles */
+.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.tile {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+    min-height: 180px;
+}
+.tile-long { grid-column: span 2; min-height: 100px; text-align: center; }
+
+.progress {
+    position: absolute;
+    bottom: 0; left: 0; height: 8px;
+    background: var(--accent);
+    width: 0%; transition: width 0.1s linear;
+}
+
+.alarm { background: #450a0a; border: 2px solid var(--danger); }
+.alarm .progress { background: var(--danger); }
+
+/* Alphabet Section */
+.alpha-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.letter-container {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    background: var(--card);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 8rem;
+    font-weight: 900;
+    border: 8px solid #334155;
+}
+
+.next-letter-progress {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    border: 8px solid var(--accent);
+    clip-path: inset(0 0 0 0); /* Animowane w JS */
+    opacity: 0.3;
+}
+
+.sentence-box {
+    font-size: 3rem;
+    letter-spacing: 5px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+}
+
+/* Needs Grid */
+.needs-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+}
+
+.need-item {
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 15px;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.need-item.active {
+    border-color: var(--accent);
+    background: #1e293b;
+    transform: scale(1.05);
+}
+
+.action-progress-bar { position: absolute; top: 0; left: 0; width: 0; height: 10px; }
+.bg-green { background: var(--success) !important; }
+.bg-red { background: var(--danger) !important; }
+
+.footer { margin-top: auto; opacity: 0.4; font-size: 0.8rem; }
