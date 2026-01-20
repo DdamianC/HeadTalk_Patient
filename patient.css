@@ -1,11 +1,12 @@
 :root {
     --bg-gradient: linear-gradient(135deg, #4b908e 0%, #63439e 100%);
-    --side-bg: #9ea1a1;
-    --tile-white: rgba(255, 255, 255, 0.9);
+    --side-grey: #9ea1a1;
+    --tile-white: rgba(255, 255, 255, 0.95);
     --accent-red: #ff5252;
-    --accent-green: #4caf50;
+    --accent-green: #2ecc71;
 }
 
+* { box-sizing: border-box; }
 body, html {
     margin: 0; padding: 0; height: 100%;
     font-family: 'Inter', sans-serif;
@@ -14,128 +15,109 @@ body, html {
 
 .app-container {
     display: grid;
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 320px 1fr;
     height: 100vh;
 }
 
-/* SIDEBAR - Szary panel z Twojego rysunku */
+/* SIDEBAR */
 .sidebar {
-    background: var(--side-bg);
-    padding: 30px;
+    background: var(--side-grey);
+    padding: 25px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border-radius: 0 50px 50px 0;
-    z-index: 10;
+    border-radius: 0 40px 40px 0;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
 }
 
 .status-box {
-    background: black;
-    color: white;
-    padding: 15px;
-    border-radius: 25px;
-    text-align: center;
-    font-weight: bold;
+    background: #000; color: #fff;
+    padding: 15px; border-radius: 20px;
+    text-align: center; font-size: 0.9rem;
 }
 
-.camera-wrapper {
-    width: 250px;
-    height: 350px;
-    background: #ff5252;
-    border-radius: 40px;
-    overflow: hidden;
-    position: relative;
-    border: 5px solid #ff5252;
+.camera-frame {
+    width: 240px; height: 320px;
+    background: var(--accent-red);
+    border-radius: 35px; border: 4px solid var(--accent-red);
+    overflow: hidden; position: relative;
 }
 
 #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 #output_canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
-/* MAIN CONTENT - Gradient */
-.main-screen {
+/* MAIN CONTENT */
+.content-area {
     background: var(--bg-gradient);
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
+    padding: 40px; display: flex;
+    flex-direction: column; align-items: center;
 }
 
-.top-header h1 { font-size: 3.5rem; color: black; margin-bottom: 50px; }
-
-/* TILES */
-.tiles-row { display: flex; gap: 40px; }
-
-.tile {
-    width: 320px; height: 220px;
-    background: var(--tile-white);
-    border-radius: 50px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-}
-
-.alarm-tile {
-    width: 680px; height: 120px;
-    background: var(--tile-white);
-    margin-bottom: 40px;
-    border-radius: 40px;
-}
-
-.tile h2 { font-size: 2.5rem; margin: 0; color: #333; }
-
-.fill-indicator {
-    position: absolute; bottom: 0; left: 0;
-    height: 15px; background: var(--accent-green);
-    width: 0%; transition: width 0.1s linear;
-}
-
-/* ALPHABET VIEW */
-.letter-box {
-    width: 250px; height: 250px;
-    background: var(--accent-red);
-    border-radius: 50px;
-    font-size: 10rem; font-weight: bold;
-    display: flex; align-items: center; justify-content: center;
-    color: black; margin-bottom: 30px;
-}
-
-.sentence-display {
-    width: 80%; background: var(--tile-white);
-    padding: 20px; border-radius: 30px;
-    font-size: 2rem; text-align: center; margin-bottom: 40px;
-}
-
-.action-buttons { display: flex; gap: 20px; }
-.btn {
-    background: white; padding: 20px 40px;
-    border-radius: 30px; font-weight: bold; font-size: 1.2rem;
-    display: flex; align-items: center; gap: 10px;
-}
-
-/* NEEDS GRID */
-.needs-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px; margin-bottom: 40px;
-}
-
-.need-tile {
-    width: 140px; height: 140px;
-    background: var(--accent-red);
-    border-radius: 30px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    font-weight: bold; transition: transform 0.2s;
-}
-
-.need-tile.active { border: 5px solid white; transform: scale(1.1); }
+h1 { font-size: 3rem; margin-bottom: 40px; color: #000; }
 
 .view { display: none; flex-direction: column; align-items: center; width: 100%; }
 .view.active { display: flex; }
 
-.main-footer { position: absolute; bottom: 20px; font-size: 2rem; font-weight: bold; }
+/* KAFELKI */
+.tiles-row { display: flex; gap: 30px; }
+.tile {
+    width: 280px; height: 200px;
+    background: var(--tile-white);
+    border-radius: 40px; position: relative;
+    overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.alarm-tile {
+    width: 590px; height: 110px;
+    background: var(--tile-white);
+    margin-bottom: 30px; border-radius: 30px;
+}
+
+.tile-inner {
+    height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+}
+
+.progress-fill {
+    position: absolute; bottom: 0; left: 0;
+    height: 12px; background: var(--accent-green);
+    width: 0%; transition: width 0.1s linear;
+}
+
+/* ALFABET & POTRZEBY */
+.letter-focus {
+    width: 220px; height: 220px;
+    background: var(--accent-red); border-radius: 45px;
+    font-size: 9rem; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 25px;
+}
+
+.sentence-container {
+    width: 80%; background: var(--tile-white);
+    padding: 20px; border-radius: 25px;
+    font-size: 1.8rem; text-align: center; margin-bottom: 30px;
+}
+
+.needs-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 15px; margin-bottom: 30px;
+}
+
+.need-item {
+    width: 130px; height: 130px;
+    background: var(--accent-red); border-radius: 25px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-weight: bold; font-size: 0.9rem;
+}
+
+.need-item.highlight { border: 4px solid #fff; transform: scale(1.05); }
+
+.nav-hints { display: flex; gap: 20px; }
+.hint-btn {
+    background: #fff; padding: 15px 30px;
+    border-radius: 25px; font-weight: bold;
+}
+
+.author-footer { position: absolute; bottom: 20px; font-size: 1.5rem; font-weight: bold; }
