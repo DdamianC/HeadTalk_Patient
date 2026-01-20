@@ -56,9 +56,7 @@ function execute(dir) {
     else if (state.view === 'alpha') {
         if (dir === 'up') { setView('menu'); return; } 
         if (dir === 'left') { 
-            const char = letters[state.alphaIdx];
-            if(char === "<-") state.sentence = state.sentence.slice(0, -1);
-            else state.sentence += char;
+            state.sentence += letters[state.alphaIdx];
             autoTimer = 0; 
         }
         if (dir === 'right') { state.sentence = state.sentence.slice(0, -1); autoTimer = 0; }
@@ -69,7 +67,7 @@ function execute(dir) {
         }
     } 
     else if (state.view === 'needs') {
-        if (dir === 'up') { setView('menu'); return; }
+        if (dir === 'up') setView('menu');
         if (dir === 'left') {
             document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
@@ -110,17 +108,15 @@ faceMesh.onResults(res => {
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // --- LOGIKA STEROWANIA DOPASOWANA DO TWOICH RUCHÓW ---
-    // Ponieważ kamera jest lustrzana, musimy odwrócić matematykę:
+    // ODWRÓCONA LOGIKA POZIOMA (eyeDiffY < -0.045 to teraz LEFT)
     const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
     if (nose.y < forehead.y + 0.08) move = 'up'; 
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    // TUTAJ POPRAWKA: Przekręcenie głowy w Twoją lewą stronę to teraz 'left'
-    else if (eyeDiffY > 0.045) move = 'left';  
-    else if (eyeDiffY < -0.045) move = 'right'; 
+    else if (eyeDiffY < -0.045) move = 'left';  
+    else if (eyeDiffY > 0.045) move = 'right'; 
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -161,14 +157,14 @@ function updateUI(move) {
         if (move === 'left') document.getElementById('bar-left-needs').style.width = p + '%';
         if (move === 'up') document.getElementById('bar-up-needs').style.width = p + '%';
         
-        // Podświetlenie kafelków w sekcji potrzeb
+        // Dynamiczne podświetlanie kafelków potrzeb
         document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
         const activeItem = document.getElementById(`n-${state.needIdx}`);
         if(activeItem) activeItem.classList.add('active');
     }
 }
 
-// PĘTLA CZASOWA (Alfabet i Potrzeby zmieniają się co 4s)
+// PĘTLA CZASOWA - Odpowiada za zmianę liter i kafelków potrzeb w kółko
 setInterval(() => {
     if (state.view === 'alpha' || state.view === 'needs') {
         if (state.entryTime < START_DELAY) {
