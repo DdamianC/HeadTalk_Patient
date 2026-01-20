@@ -27,7 +27,11 @@ body {
     border-right: 1px solid #334155;
 }
 
-.brand { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+.brand {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--accent);
+}
 
 .final-text {
     background: #000;
@@ -64,10 +68,21 @@ body {
     justify-content: center;
 }
 
-.view { display: none; flex-direction: column; gap: 20px; }
-.view.active { display: flex; }
+.view {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+}
 
-.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.view.active {
+    display: flex;
+}
+
+.tile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
 
 .tile {
     background: var(--card);
@@ -79,9 +94,22 @@ body {
     border: 2px solid transparent;
 }
 
-.tile-long { grid-column: span 2; padding: 1.5rem; }
-.tile h2 { margin: 0; font-size: 2rem; font-weight: 800; }
-.icon { font-size: 3rem; display: block; margin-bottom: 10px; }
+.tile-long {
+    grid-column: span 2;
+    padding: 1.5rem;
+}
+
+.tile h2 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+}
 
 .progress {
     position: absolute;
@@ -93,8 +121,14 @@ body {
     transition: width 0.1s linear;
 }
 
-.alarm { background: #450a0a; border: 2px solid var(--danger); }
-.alarm .progress { background: var(--danger); }
+.alarm {
+    background: #450a0a;
+    border: 2px solid var(--danger);
+}
+
+.alarm .progress {
+    background: var(--danger);
+}
 
 .alpha-display {
     background: var(--card);
@@ -106,7 +140,12 @@ body {
     border: 4px solid #334155;
 }
 
-.letter-box { font-size: 10rem; font-weight: 900; color: var(--accent); line-height: 1; }
+.letter-box {
+    font-size: 10rem;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+}
 
 .auto-progress-container {
     width: 100%;
@@ -123,7 +162,12 @@ body {
     width: 0%;
 }
 
-.sentence-box { font-size: 2.5rem; margin-top: 20px; color: #94a3b8; min-height: 1.2em; }
+.sentence-box {
+    font-size: 2.5rem;
+    margin-top: 20px;
+    color: #94a3b8;
+    min-height: 1.2em;
+}
 
 .needs-container {
     display: grid;
@@ -145,5 +189,10 @@ body {
     transform: scale(1.1);
 }
 
-#bar-left-alpha { background-color: var(--success); }
-#bar-right-alpha { background-color: var(--danger); }
+#bar-left-alpha {
+    background-color: var(--success);
+}
+
+#bar-right-alpha {
+    background-color: var(--danger);
+}
