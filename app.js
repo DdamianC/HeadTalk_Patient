@@ -1,136 +1,146 @@
-
-// ================= KONFIGURACJA DANYCH =================
-const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " "];
-const needsList = [
-    {t: "Jedzenie", i: "🍎"}, {t: "Picie", i: "💧"}, {t: "Leki", i: "💊"}, {t: "Ból", i: "😫"},
-    {t: "Zimno", i: "❄️"}, {t: "Ciepło", i: "🔥"}, {t: "Pomoc", i: "🆘"}, {t: "Sen", i: "😴"}
+const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ "];
+const needs = [
+    {n: "Woda", i: "💧"}, {n: "Jedzenie", i: "🍽️"}, {n: "Leki", i: "💊"}, {n: "Ból", i: "😫"},
+    {n: "Zimno", i: "❄️"}, {n: "Ciepło", i: "🔥"}, {n: "Toaleta", i: "🚽"}, {n: "Pomoc", i: "🆘"},
+    {n: "Pozycja", i: "🛏️"}, {n: "Sen", i: "😴"}, {n: "Duszność", i: "🫁"}, {n: "Inne", i: "❓"}
 ];
 
 let state = {
-    view: 'menu',
-    neutralX: null,
-    dir: 'center',
-    dwell: 0,
+    view: "menu",
     sentence: "",
-    alphaIdx: 0,
-    needIdx: 0
+    letterIdx: 0,
+    needIdx: 0,
+    dwell: 0,
+    currentDir: "center",
+    lastActionTime: 0
 };
 
-const DWELL_MAX = 20; // Czas przytrzymania głowy (ok. 2 sekundy)
+const DWELL_THRESHOLD = 25; // ile klatek trzymać głowę
 
-// Inicjalizacja potrzeb
-const needsGrid = document.getElementById("needsGrid");
-needsList.forEach((n, i) => {
-    const div = document.createElement("div");
-    div.className = "need-item";
-    div.id = `need-${i}`;
-    div.innerHTML = `<span style="font-size:3rem">${n.i}</span><br>${n.t}`;
+// Inicjalizacja Potrzeb
+const needsGrid = document.getElementById('needs-grid');
+needs.forEach((need, idx) => {
+    const div = document.createElement('div');
+    div.className = 'need-item';
+    div.id = `need-${idx}`;
+    div.innerHTML = `<span style="font-size:2rem">${need.i}</span><span>${need.n}</span>`;
     needsGrid.appendChild(div);
 });
 
-// ================= AUTOMAT SKANUJĄCY =================
+// Pętla automatyczna (skanowanie)
 setInterval(() => {
     if (state.view === "alphabet") {
-        state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-        document.getElementById("alphabetGrid").innerText = letters[state.alphaIdx];
+        state.letterIdx = (state.letterIdx + 1) % letters.length;
+        document.getElementById('current-letter').innerText = letters[state.letterIdx];
     } else if (state.view === "needs") {
-        document.querySelectorAll(".need-item").forEach(el => el.classList.remove("active"));
-        state.needIdx = (state.needIdx + 1) % needsList.length;
-        document.getElementById(`need-${state.needIdx}`).classList.add("active");
+        document.querySelectorAll('.need-item').forEach(el => el.classList.remove('highlight'));
+        state.needIdx = (state.needIdx + 1) % needs.length;
+        document.getElementById(`need-${state.needIdx}`).classList.add('highlight');
     }
-}, 4000);
+}, 3000); // Zmiana co 3 sekundy
 
-// ================= LOGIKA WIDOKÓW =================
-function switchView(v) {
-    document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
-    document.getElementById(`${v}-view`).classList.add("active");
-    document.getElementById("view-label").innerText = v.toUpperCase();
-    state.view = v;
-    state.dwell = 0;
-}
+function handleAction(dir) {
+    const now = Date.now();
+    if (now - state.lastActionTime < 1000) return; // Debounce
 
-function handleConfirm(dir) {
     if (state.view === "menu") {
         if (dir === "left") switchView("alphabet");
         if (dir === "right") switchView("needs");
-        if (dir === "up") alert("ALARM WYSŁANY!");
-    } else if (state.view === "alphabet") {
+        if (dir === "up") alert("⚠️ ALARM WYSŁANY!");
+    } 
+    else if (state.view === "alphabet") {
         if (dir === "left") {
-            state.sentence += letters[state.alphaIdx];
-            document.getElementById("sentenceOutput").innerText = state.sentence;
+            state.sentence += letters[state.letterIdx];
+            updateSentence();
         }
         if (dir === "right") {
             state.sentence = state.sentence.slice(0, -1);
-            document.getElementById("sentenceOutput").innerText = state.sentence || "Zacznij pisać...";
+            updateSentence();
         }
-        if (dir === "up" || dir === "down") switchView("menu");
-    } else if (state.view === "needs") {
-        if (dir === "left") alert("Wybrano: " + needsList[state.needIdx].t);
-        if (dir === "up" || dir === "down") switchView("menu");
+        if (dir === "up") switchView("menu");
+        if (dir === "down") { alert("Wysłano: " + state.sentence); switchView("menu"); }
     }
+    else if (state.view === "needs") {
+        if (dir === "left") {
+            state.sentence = "Potrzebuję: " + needs[state.needIdx].n;
+            alert(state.sentence);
+        }
+        if (dir === "up") switchView("menu");
+        if (dir === "down") switchView("menu");
+    }
+
+    state.lastActionTime = now;
 }
 
-// ================= FACE MESH & KAMERA =================
-const video = document.getElementById("video");
-const canvas = document.getElementById("cameraCanvas");
-const ctx = canvas.getContext("2d");
+function switchView(v) {
+    document.getElementById('menu-section').className = 'hidden';
+    document.getElementById('alphabet-section').className = 'hidden';
+    document.getElementById('needs-section').className = 'hidden';
+    
+    state.view = v;
+    document.getElementById(`${v}-section`).className = 'active-view';
+    if(v === 'menu') state.sentence = "";
+}
 
-const faceMesh = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+function updateSentence() {
+    document.getElementById('display-sentence').innerText = state.sentence || "Wpisz tekst...";
+}
+
+// MediaPipe Setup
+const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
 faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
 
 faceMesh.onResults(results => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-        document.getElementById("dot").classList.remove("active");
+        document.getElementById('status-dot').style.backgroundColor = 'red';
         return;
     }
-    document.getElementById("dot").classList.add("active");
+    document.getElementById('status-dot').style.backgroundColor = '#2ecc71';
+    
+    const landmarks = results.multiFaceLandmarks[0];
+    // Prosta detekcja wychylenia (nos względem uszu)
+    const nose = landmarks[1];
+    const leftEar = landmarks[234];
+    const rightEar = landmarks[454];
+    const topHead = landmarks[10];
+    const chin = landmarks[152];
 
-    // Rysowanie uproszczone (tylko punkty)
-    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-    const lm = results.multiFaceLandmarks[0];
+    let dir = "center";
+    const horizontalRatio = (nose.x - leftEar.x) / (rightEar.x - leftEar.x);
+    const verticalRatio = (nose.y - topHead.y) / (chin.y - topHead.y);
 
-    // Detekcja kierunku
-    const nose = lm[1];
-    const leftEye = lm[234];
-    const rightEye = lm[454];
-    const currentX = nose.x - (leftEye.x + rightEye.x) / 2;
+    if (horizontalRatio < 0.4) dir = "right"; // Lustrzane odbicie kamery
+    else if (horizontalRatio > 0.6) dir = "left";
+    else if (verticalRatio < 0.45) dir = "up";
+    else if (verticalRatio > 0.65) dir = "down";
 
-    if (state.neutralX === null) state.neutralX = currentX;
-    const diffX = currentX - state.neutralX;
-
-    let move = "center";
-    if (diffX < -0.05) move = "right";
-    else if (diffX > 0.05) move = "left";
-    else if (nose.y < lm[10].y + 0.05) move = "up";
-    else if (nose.y > lm[152].y - 0.1) move = "down";
-
-    if (move !== "center" && move === state.dir) {
+    if (dir !== "center" && dir === state.currentDir) {
         state.dwell++;
-        updateProgress(state.dwell / DWELL_MAX * 100);
+        updateFills(state.dwell / DWELL_THRESHOLD * 100);
     } else {
         state.dwell = 0;
-        state.dir = move;
-        updateProgress(0);
+        state.currentDir = dir;
+        updateFills(0);
     }
 
-    if (state.dwell >= DWELL_MAX) {
-        handleConfirm(move);
+    if (state.dwell >= DWELL_THRESHOLD) {
+        handleAction(dir);
         state.dwell = 0;
     }
 });
 
-function updateProgress(pct) {
-    document.querySelectorAll(".progress-bar").forEach(b => b.style.width = "0%");
+function updateFills(percent) {
+    document.querySelectorAll('.fill').forEach(f => f.style.width = '0%');
     if (state.view === "menu") {
-        if (state.dir === "left") document.getElementById("bar-alphabet").style.width = pct + "%";
-        if (state.dir === "right") document.getElementById("bar-needs").style.width = pct + "%";
-        if (state.dir === "up") document.getElementById("bar-alarm").style.width = pct + "%";
+        if (state.currentDir === "left") document.querySelector('#tile-alphabet .fill').style.width = percent + '%';
+        if (state.currentDir === "right") document.querySelector('#tile-needs .fill').style.width = percent + '%';
+        if (state.currentDir === "up") document.querySelector('#tile-alarm .fill').style.width = percent + '%';
     }
 }
 
-const camera = new Camera(video, {
-    onFrame: async () => { await faceMesh.send({ image: video }) },
+const videoElement = document.getElementById('video');
+const camera = new Camera(videoElement, {
+    onFrame: async () => { await faceMesh.send({image: videoElement}); },
     width: 640, height: 480
 });
 camera.start();
