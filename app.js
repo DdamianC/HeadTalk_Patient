@@ -15,9 +15,9 @@ let state = {
     entryTime: 0 
 };
 
-let autoTimer = 0; // Wspólny timer dla alfabetu i potrzeb
-const START_DELAY = 60;    // 6 sekund (60 * 100ms)
-const CHANGE_TIME = 40;    // 4 sekundy (40 * 100ms)
+let autoTimer = 0; 
+const START_DELAY = 60;    
+const CHANGE_TIME = 40;    
 const DWELL_REQ = 25;      
 
 function playAlarm() {
@@ -110,15 +110,17 @@ faceMesh.onResults(res => {
     const nose = landmarks[1]; 
     const forehead = landmarks[10];
 
-    // POPRAWKA 1: Odwrócone sterowanie (Lustrzane dopasowanie)
+    // --- LOGIKA STEROWANIA DOPASOWANA DO TWOICH RUCHÓW ---
+    // Ponieważ kamera jest lustrzana, musimy odwrócić matematykę:
     const eyeDiffY = rightEye.y - leftEye.y; 
     
     let move = 'center';
 
     if (nose.y < forehead.y + 0.08) move = 'up'; 
     else if (nose.y > forehead.y + 0.19) move = 'down';
-    else if (eyeDiffY < -0.045) move = 'left';  // Zmienione znaki < / >
-    else if (eyeDiffY > 0.045) move = 'right'; 
+    // TUTAJ POPRAWKA: Przekręcenie głowy w Twoją lewą stronę to teraz 'left'
+    else if (eyeDiffY > 0.045) move = 'left';  
+    else if (eyeDiffY < -0.045) move = 'right'; 
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -159,14 +161,14 @@ function updateUI(move) {
         if (move === 'left') document.getElementById('bar-left-needs').style.width = p + '%';
         if (move === 'up') document.getElementById('bar-up-needs').style.width = p + '%';
         
-        // Podświetlenie aktywnego kafelka potrzeb
+        // Podświetlenie kafelków w sekcji potrzeb
         document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
         const activeItem = document.getElementById(`n-${state.needIdx}`);
         if(activeItem) activeItem.classList.add('active');
     }
 }
 
-// PĘTLA CZASOWA (Logika zmiany liter i potrzeb)
+// PĘTLA CZASOWA (Alfabet i Potrzeby zmieniają się co 4s)
 setInterval(() => {
     if (state.view === 'alpha' || state.view === 'needs') {
         if (state.entryTime < START_DELAY) {
