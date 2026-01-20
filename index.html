@@ -2,61 +2,45 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>BCI – Pacjent</title>
+<title>BCI – System Pacjenta</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="patient.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="statusBar">
-  <span id="modeLabel">TRYB: MENU</span>
-  <span id="trackLabel">🔴 BRAK TWARZY</span>
-</div>
+<header>
+  <h1>🧠 BCI Communication</h1>
+  <div id="status">🔴 brak twarzy</div>
+</header>
 
-<h1>🧠 BCI Communication System</h1>
-
+<!-- ===== MENU ===== -->
 <section id="menu">
   <div class="tiles">
-    <div class="tile" id="tileAlphabet">
-      ALFABET
-      <div class="progress" id="progAlphabet"></div>
-    </div>
-    <div class="tile" id="tileYesNo">
-      TAK / NIE
-      <div class="progress" id="progYesNo"></div>
-    </div>
+    <div class="tile" id="menuAlphabet">ALFABET<div class="fill"></div></div>
+    <div class="tile" id="menuNeeds">POTRZEBY<div class="fill"></div></div>
+  </div>
+  <div class="tile alarm" id="menuAlarm">
+    ⛔ ALARM
+    <div class="fill"></div>
   </div>
 </section>
 
-<section id="alphabetView" hidden>
-  <div class="letterTile" id="letterTile">A</div>
-
-  <div class="sentenceBox" id="sentenceBox">
-    <span id="sentence"></span><span class="cursor">▌</span>
-  </div>
-
-  <div class="hint">
-    ⬅ dodaj | ➡ usuń | ⬇ wyślij | ⬆ menu
-  </div>
+<!-- ===== ALFABET ===== -->
+<section id="alphabet" hidden>
+  <div class="tile top">⬆ MENU<div class="fill"></div></div>
+  <div id="letter">A</div>
+  <div id="sentence"></div>
+  <div class="tile bottom">⬇ WYŚLIJ<div class="fill"></div></div>
 </section>
 
-<section id="yesnoView" hidden>
-  <div class="question" id="questionText">Pytanie...</div>
-
-  <div class="tiles">
-    <div class="tile" id="yesTile">
-      TAK
-      <div class="progress" id="progYes"></div>
-    </div>
-    <div class="tile" id="noTile">
-      NIE
-      <div class="progress" id="progNo"></div>
-    </div>
-  </div>
+<!-- ===== POTRZEBY ===== -->
+<section id="needs" hidden>
+  <div class="grid" id="needsGrid"></div>
+  <div class="hint">⬅ wybierz | ➡ anuluj | ⬇ wyślij | ⬆ menu</div>
 </section>
 
 <video id="video" autoplay muted playsinline hidden></video>
-<canvas id="camCanvas" width="320" height="240"></canvas>
+<canvas id="cam" width="320" height="240"></canvas>
 
 <footer>
 Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
@@ -64,6 +48,6 @@ Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="patient.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
