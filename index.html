@@ -2,81 +2,77 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BCI Communication Dashboard</title>
+    <title>BCI Communication System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div class="app-container">
-    <aside class="sidebar">
-        <div class="msg-box">Wiadomość od pacjenta</div>
-        <div class="avatar">🍎</div>
-        
-        <div class="camera-wrap">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="cameraCanvas" width="640" height="480"></canvas>
+    <header>
+        <div class="patient-info">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">Inicjalizacja kamery...</span>
         </div>
-        
-        <div class="status">
-            <span id="dot"></span> kamera <strong id="view-label">MENU</strong>
+        <div class="system-title">System Komunikacji</div>
+        <div class="user-name">Damian Cybula itd.</div>
+    </header>
+
+    <main id="main-display">
+        <section id="menu-section" class="active-view">
+            <div class="tile alarm" id="tile-alarm">
+                <span class="arrow">⬆</span> ALARM <div class="fill"></div>
+            </div>
+            <div class="tiles-row">
+                <div class="tile" id="tile-alphabet">
+                    <span class="arrow">⬅</span> ALFABET
+                    <div class="preview-letters">A B C...</div>
+                    <div class="fill"></div>
+                </div>
+                <div class="tile" id="tile-needs">
+                    WYBÓR <span class="arrow">➡</span>
+                    <div class="preview-icons">💧 🍽️ 💊</div>
+                    <div class="fill"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="alphabet-section" class="hidden">
+            <div class="nav-hint top">⬆ WRÓĆ DO MENU</div>
+            <div class="focus-letter" id="current-letter">A</div>
+            <div class="sentence-bar">
+                <div id="display-sentence">Wpisz tekst...</div>
+            </div>
+            <div class="controls-hint">
+                <span>⬅ DODAJ</span>
+                <span>USUŃ ➡</span>
+            </div>
+            <div class="nav-hint bottom">⬇ DODAJ DO EKRANU GŁÓWNEGO</div>
+        </section>
+
+        <section id="needs-section" class="hidden">
+            <div class="nav-hint top">⬆ WRÓĆ DO MENU</div>
+            <h2 id="needs-title">Wybierz co potrzebujesz</h2>
+            <div class="needs-grid" id="needs-grid">
+                </div>
+            <div class="nav-hint bottom">⬇ DODAJ DO EKRANU GŁÓWNEGO</div>
+        </section>
+    </main>
+
+    <aside class="sidebar">
+        <div class="camera-box">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="output_canvas"></canvas>
+            <div class="camera-label">kamera <span class="red-dot"></span></div>
+        </div>
+        <div class="patient-card">
+            <img src="https://via.placeholder.com/150" alt="Pacjent" id="patient-img">
         </div>
     </aside>
 
-    <main class="main-content">
-        <h1 class="title">System komunikacji</h1>
-
-        <section id="menu-view" class="view active">
-            <div class="tile alarm" id="tile-alarm">
-                <div class="tile-inner"><span>⬆</span> ALARM</div>
-                <div class="progress-bar" id="bar-alarm"></div>
-            </div>
-            
-            <div class="tile-row">
-                <div class="tile square" id="tile-alphabet">
-                    <div class="tile-inner">
-                        <h2>ALFABET</h2>
-                        <p>A B C...</p>
-                        <span class="arrow">⬅</span>
-                    </div>
-                    <div class="progress-bar" id="bar-alphabet"></div>
-                </div>
-                
-                <div class="tile square" id="tile-needs">
-                    <div class="tile-inner">
-                        <h2>Wybór</h2>
-                        <div class="icons">⏹⏹⏹</div>
-                        <span class="arrow">➡</span>
-                    </div>
-                    <div class="progress-bar" id="bar-needs"></div>
-                </div>
-            </div>
-        </section>
-
-        <section id="alphabet-view" class="view">
-            <div class="focus-letter" id="alphabetGrid">A</div>
-            <div class="sentence-box" id="sentenceOutput">Zacznij pisać...</div>
-            <div class="nav-hints">
-                <div class="hint">Dodaj do ekranu głównego <span>⬇</span></div>
-                <div class="hint grey">Wróć do menu <span>⬆</span></div>
-            </div>
-            <div class="global-progress"><div id="alphabetProgress"></div></div>
-        </section>
-
-        <section id="needs-view" class="view">
-            <h2 class="grid-title">Wybierz co potrzebujesz</h2>
-            <div class="needs-grid" id="needsGrid">
-                </div>
-            <div class="nav-hints">
-                <div class="hint">Zatwierdź <span>⬇</span></div>
-                <div class="hint grey">Wróć do menu <span>⬆</span></div>
-            </div>
-        </section>
-
-        <footer class="footer">
-            Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
-        </footer>
-    </main>
+    <footer>
+        Damian Cybula – Inżynieria Biomedyczna 2.2 – Telemedycyna 2025/2026
+    </footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
