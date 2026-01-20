@@ -5,7 +5,7 @@
     --text: #f8fafc;
     --danger: #ef4444;
     --success: #22c55e;
-    --warning: #f59e0b; /* Pomarańczowy */
+    --warning: #f59e0b;
 }
 
 body {
@@ -46,9 +46,16 @@ body {
     border-radius: 12px;
     overflow: hidden;
     margin-top: auto;
+    position: relative;
 }
 
-#cameraCanvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+#cameraCanvas { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    /* Lustrzane odbicie wizualne */
+    transform: scaleX(-1); 
+}
 
 .stage {
     flex-grow: 1;
@@ -89,30 +96,28 @@ body {
 .alarm { background: #450a0a; color: white; border: 2px solid var(--danger); }
 .alarm .progress { background: var(--danger); }
 
-/* ALFABET - Logika kolorów i paska */
+/* ALFABET */
 .alpha-main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     background: var(--card);
     border-radius: 20px;
     padding: 2rem;
-    margin: 1rem 0;
-    border: 1px solid #334155;
+    border: 4px solid #334155;
 }
 
-.letter-box { font-size: 8rem; font-weight: 900; color: var(--accent); line-height: 1; }
+.letter-box { font-size: 8rem; font-weight: 900; color: var(--accent); }
 
-/* Nowy pasek pomarańczowy */
 .auto-progress-container {
-    width: 80%;
-    height: 10px;
+    width: 100%;
+    height: 12px;
     background: #0f172a;
-    border-radius: 5px;
+    border-radius: 6px;
     margin: 20px 0;
     overflow: hidden;
 }
+
 .auto-progress-bar {
     height: 100%;
     background: var(--warning);
@@ -120,11 +125,6 @@ body {
 }
 
 .sentence-box { font-size: 2rem; color: #94a3b8; min-height: 1.2em; }
-
-/* Kolory specyficzne dla akcji */
-#bar-left-alpha { background: var(--success); }
-#bar-right-alpha { background: var(--danger); }
-#bar-left-needs { background: var(--success); }
 
 /* POTRZEBY */
 .needs-container {
@@ -138,7 +138,16 @@ body {
     padding: 1.5rem;
     border-radius: 12px;
     text-align: center;
-    border: 3px solid transparent;
+    border: 4px solid transparent;
+    transition: all 0.2s;
 }
 
-.need-item.active { border-color: var(--accent); background: #334155; }
+.need-item.active { 
+    border-color: var(--accent); 
+    background: #334155; 
+    transform: scale(1.1);
+}
+
+#bar-left-alpha { background: var(--success); }
+#bar-right-alpha { background: var(--danger); }
+#bar-left-needs { background: var(--success); }
