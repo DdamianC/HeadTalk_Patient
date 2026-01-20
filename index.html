@@ -28,7 +28,7 @@
             <section id="view-menu" class="view active">
                 <div class="tile tile-long alarm" id="tile-up">
                     <div class="tile-content">⬆ ALARM</div>
-                    <div class="progress" id="bar-up"></div>
+                    <div class="progress" id="bar-up-menu"></div>
                 </div>
                 <div class="tile-grid">
                     <div class="tile tile-sq" id="tile-left">
@@ -37,7 +37,7 @@
                             <p>A B C ...</p>
                             <span class="icon">⬅</span>
                         </div>
-                        <div class="progress" id="bar-left"></div>
+                        <div class="progress" id="bar-left-menu"></div>
                     </div>
                     <div class="tile tile-sq" id="tile-right">
                         <div class="tile-content">
@@ -45,7 +45,7 @@
                             <p>POTRZEBY</p>
                             <span class="icon">➡</span>
                         </div>
-                        <div class="progress" id="bar-right"></div>
+                        <div class="progress" id="bar-right-menu"></div>
                     </div>
                 </div>
             </section>
@@ -53,12 +53,14 @@
             <section id="view-alpha" class="view">
                 <div class="letter-box" id="cur-let">A</div>
                 <div class="sentence-box" id="sentence">---</div>
-                <div class="nav-hint">⬅ Dodaj | ➡ Usuń | ⬇ WYŚLIJ | ⬆ MENU</div>
+                
+                <div class="progress" id="bar-left-alpha"></div> <div class="progress" id="bar-right-alpha"></div> <div class="progress" id="bar-up-alpha"></div> <div class="progress" id="bar-down-alpha"></div> <div class="nav-hint">⬅ Dodaj | ➡ Usuń | ⬇ WYŚLIJ | ⬆ MENU</div>
             </section>
 
             <section id="view-needs" class="view">
                 <div class="needs-container" id="needs-grid"></div>
-                <div class="nav-hint">⬅ WYBIERZ | ⬆ MENU</div>
+                
+                <div class="progress" id="bar-left-needs"></div> <div class="progress" id="bar-up-needs"></div> <div class="nav-hint">⬅ WYBIERZ | ⬆ MENU</div>
             </section>
 
             <footer class="footer">Damian Cybula | Inżynieria Biomedyczna 2026</footer>
