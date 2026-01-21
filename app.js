@@ -146,8 +146,7 @@ faceMesh.onResults(res => {
 
     const nose = res.multiFaceLandmarks[0][1];
 
-    /* 🔴 JEDNOZNACZNE ODWÓCENIE X (NAPRAWA) */
-    const nx = 1 - nose.x;
+    const nx = 1 - nose.x; // logika lustrzana
     const ny = nose.y;
 
     let zone = 'center';
@@ -170,21 +169,33 @@ faceMesh.onResults(res => {
     }
 
     drawZones();
-    drawNose(nx, ny);
+    drawNose(nose.x, nose.y); // ✅ POPRAWIONA KROPKA
     updateBars(zone);
 });
 
 /* =====================================================
-   PASKI POSTĘPU – NAPRAWIONE WSZĘDZIE
+   PASKI POSTĘPU – DODANE, NIC NIE USUNIĘTE
 ===================================================== */
 function clearBars() {
-    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+    document.querySelectorAll('.progress, .auto-progress-bar')
+        .forEach(b => b.style.width = '0%');
 }
 
 function updateBars(dir) {
     clearBars();
+
     const bar = document.getElementById(`bar-${dir}-${state.view}`);
     if (bar) bar.style.width = (state.dwell / DWELL_REQ * 100) + '%';
+
+    if (state.view === 'alpha' && dir === 'up1') {
+        document.getElementById('auto-letter-bar-alpha').style.width =
+            (state.dwell / DWELL_REQ * 100) + '%';
+    }
+
+    if (state.view === 'needs' && (dir === 'up1' || dir === 'right')) {
+        document.getElementById('auto-letter-bar-needs').style.width =
+            (state.dwell / DWELL_REQ * 100) + '%';
+    }
 }
 
 /* =====================================================
@@ -204,6 +215,10 @@ function drawZones() {
 
     ctx.fillStyle = 'rgba(239,68,68,0.22)';
     ctx.fillRect(0, 0, canvas.width, canvas.height * ZONE.UP2);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawNose(x, y) {
