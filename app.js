@@ -1,18 +1,18 @@
-/* ======================================================
-   STREFY (SKORYGOWANE)
-====================================================== */
+/* =====================================================
+   STREFY (LOGICZNE + ESTETYCZNE)
+===================================================== */
 const ZONE = {
-    LEFT: 0.35,
-    RIGHT: 0.65,
-    UP1: 0.45,   // było 0.40
-    UP2: 0.32    // było 0.25
+    LEFT: 0.33,
+    RIGHT: 0.67,
+    UP1: 0.46,
+    UP2: 0.32
 };
 
 const DWELL_REQ = 20;
 
-/* ======================================================
+/* =====================================================
    DANE
-====================================================== */
+===================================================== */
 const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", "<-"];
 
 const needs = [
@@ -31,9 +31,9 @@ let state = {
     needIdx: 0
 };
 
-/* ======================================================
+/* =====================================================
    ALARM
-====================================================== */
+===================================================== */
 function playAlarm() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
@@ -41,8 +41,7 @@ function playAlarm() {
 
     osc.type = 'square';
     osc.frequency.value = 880;
-
-    gain.gain.value = 0.1;
+    gain.gain.value = 0.15;
 
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -51,9 +50,9 @@ function playAlarm() {
     osc.stop(ctx.currentTime + 1);
 }
 
-/* ======================================================
+/* =====================================================
    POTRZEBY
-====================================================== */
+===================================================== */
 function initNeeds() {
     const grid = document.getElementById('needs-grid');
     grid.innerHTML = '';
@@ -72,25 +71,24 @@ function highlightNeed() {
     document.getElementById(`n-${state.needIdx}`)?.classList.add('active');
 }
 
-/* ======================================================
+/* =====================================================
    WIDOKI
-====================================================== */
+===================================================== */
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${v}`).classList.add('active');
     state.view = v;
     state.dir = 'center';
     state.dwell = 0;
-    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+    clearBars();
     if (v === 'needs') highlightNeed();
 }
 
-/* ======================================================
+/* =====================================================
    AKCJE
-====================================================== */
+===================================================== */
 function execute(dir) {
 
-    /* MENU */
     if (state.view === 'menu') {
         if (dir === 'left') setView('alpha');
         if (dir === 'right') setView('needs');
@@ -100,7 +98,6 @@ function execute(dir) {
         }
     }
 
-    /* ALFABET */
     else if (state.view === 'alpha') {
         if (dir === 'left') state.sentence += letters[state.alphaIdx];
         if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
@@ -111,12 +108,15 @@ function execute(dir) {
         document.getElementById('sentence').innerText = state.sentence || "---";
     }
 
-    /* POTRZEBY */
     else if (state.view === 'needs') {
         if (dir === 'left') {
             document.getElementById('final-output').innerText =
                 "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
+        }
+        if (dir === 'right') {
+            state.needIdx = (state.needIdx + needs.length - 1) % needs.length;
+            highlightNeed();
         }
         if (dir === 'up1') {
             state.needIdx = (state.needIdx + 1) % needs.length;
@@ -126,9 +126,9 @@ function execute(dir) {
     }
 }
 
-/* ======================================================
+/* =====================================================
    FACE MESH
-====================================================== */
+===================================================== */
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
 const ctx = canvas.getContext('2d');
@@ -146,7 +146,7 @@ faceMesh.onResults(res => {
 
     const nose = res.multiFaceLandmarks[0][1];
 
-    /* ⬅⬅⬅ ODWÓCENIE LEWO/PRAWO */
+    /* 🔴 JEDNOZNACZNE ODWÓCENIE X (NAPRAWA) */
     const nx = 1 - nose.x;
     const ny = nose.y;
 
@@ -174,48 +174,48 @@ faceMesh.onResults(res => {
     updateBars(zone);
 });
 
-/* ======================================================
-   PASKI POSTĘPU (NAPRAWIONE)
-====================================================== */
-function updateBars(dir) {
+/* =====================================================
+   PASKI POSTĘPU – NAPRAWIONE WSZĘDZIE
+===================================================== */
+function clearBars() {
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+}
 
+function updateBars(dir) {
+    clearBars();
     const bar = document.getElementById(`bar-${dir}-${state.view}`);
     if (bar) bar.style.width = (state.dwell / DWELL_REQ * 100) + '%';
 }
 
-/* ======================================================
-   RYSOWANIE STREF
-====================================================== */
+/* =====================================================
+   ESTETYCZNE STREFY
+===================================================== */
 function drawZones() {
-    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.lineWidth = 2;
 
-    [ZONE.LEFT, ZONE.RIGHT].forEach(x => {
-        ctx.beginPath();
-        ctx.moveTo(canvas.width * x, 0);
-        ctx.lineTo(canvas.width * x, canvas.height);
-        ctx.stroke();
-    });
+    ctx.fillStyle = 'rgba(34,197,94,0.15)';
+    ctx.fillRect(0, 0, canvas.width * ZONE.LEFT, canvas.height);
 
-    [ZONE.UP1, ZONE.UP2].forEach(y => {
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height * y);
-        ctx.lineTo(canvas.width, canvas.height * y);
-        ctx.stroke();
-    });
+    ctx.fillStyle = 'rgba(249,115,22,0.15)';
+    ctx.fillRect(canvas.width * ZONE.RIGHT, 0,
+        canvas.width, canvas.height);
+
+    ctx.fillStyle = 'rgba(56,189,248,0.18)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height * ZONE.UP1);
+
+    ctx.fillStyle = 'rgba(239,68,68,0.22)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height * ZONE.UP2);
 }
 
 function drawNose(x, y) {
-    ctx.strokeStyle = 'red';
+    ctx.fillStyle = 'red';
     ctx.beginPath();
     ctx.arc(x * canvas.width, y * canvas.height, 6, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.fill();
 }
 
-/* ======================================================
+/* =====================================================
    KAMERA
-====================================================== */
+===================================================== */
 const camera = new Camera(video, {
     onFrame: async () => await faceMesh.send({ image: video }),
     width: 640,
