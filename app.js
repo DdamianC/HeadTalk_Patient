@@ -1,3 +1,6 @@
+/* ======================================================
+   DANE
+====================================================== */
 const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", "<-"];
 
 const needs = [
@@ -24,35 +27,43 @@ const CHANGE_TIME_ALPHA = 15;
 const CHANGE_TIME_NEEDS = 40;
 const DWELL_REQ = 20;
 
-/* ===== DODANE: stabilizacja sterowania ===== */
-const SMOOTHING = 0.7;
-const DEADZONE_X = 0.015;
-const DEADZONE_Y_UP = 0.06;
-const DEADZONE_Y_DOWN = 0.10;
+/* ======================================================
+   STREFY STEROWANIA (LINIE)
+====================================================== */
+const ZONE = {
+    LEFT: 0.35,
+    RIGHT: 0.65,
+    UP1: 0.40,
+    UP2: 0.25
+};
 
-let neutral = null;
-let smoothNose = { x: 0, y: 0 };
-
-/* ================= AUDIO ALARM ================= */
+/* ======================================================
+   AUDIO ALARM
+====================================================== */
 function playAlarm() {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 1);
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 1);
 }
 
-/* ================= INICJALIZACJA POTRZEB ================= */
+/* ======================================================
+   POTRZEBY
+====================================================== */
 function initNeeds() {
     const grid = document.getElementById('needs-grid');
-    if(!grid) return;
     grid.innerHTML = '';
     needs.forEach((n, i) => {
         const d = document.createElement('div');
@@ -70,14 +81,16 @@ function highlightNeed() {
     if (el) el.classList.add('active');
 }
 
+/* ======================================================
+   WIDOKI
+====================================================== */
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-    const targetView = document.getElementById(`view-${v}`);
-    if(targetView) targetView.classList.add('active');
+    document.getElementById(`view-${v}`).classList.add('active');
 
     state.view = v;
-    state.dwell = 0;
     state.dir = 'center';
+    state.dwell = 0;
     state.entryTime = 0;
     alphaTimer = 0;
 
@@ -85,36 +98,47 @@ function setView(v) {
     if (v === 'needs') highlightNeed();
 }
 
+/* ======================================================
+   AKCJE
+====================================================== */
 function execute(dir) {
     if (state.view === 'menu') {
-        if (dir === 'up') {
+        if (dir === 'left') setView('alpha');
+        if (dir === 'right') setView('needs');
+        if (dir === 'up2') {
             document.getElementById('final-output').innerText = "!!! ALARM !!!";
             playAlarm();
         }
-        if (dir === 'left') setView('alpha');
-        if (dir === 'right') setView('needs');
     }
+
     else if (state.view === 'alpha') {
-        if (dir === 'up') return setView('menu');
         if (dir === 'left') state.sentence += letters[state.alphaIdx];
         if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
-        if (dir === 'down') {
-            document.getElementById('final-output').innerText = state.sentence;
-            state.sentence = "";
-            setView('menu');
-        }
+        if (dir === 'up1') state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+        if (dir === 'up2') setView('menu');
     }
+
     else if (state.view === 'needs') {
-        if (dir === 'up') setView('menu');
         if (dir === 'left') {
             document.getElementById('final-output').innerText =
                 "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
+        if (dir === 'right') {
+            state.needIdx = (state.needIdx + needs.length - 1) % needs.length;
+            highlightNeed();
+        }
+        if (dir === 'up1') {
+            state.needIdx = (state.needIdx + 1) % needs.length;
+            highlightNeed();
+        }
+        if (dir === 'up2') setView('menu');
     }
 }
 
-/* ================= FACE MESH & CAMERA ================= */
+/* ======================================================
+   FACE MESH
+====================================================== */
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
 const ctx = canvas.getContext('2d');
@@ -130,51 +154,43 @@ faceMesh.setOptions({
 });
 
 faceMesh.onResults(res => {
-    if (!res.image) return;
+    if (!res.image || !res.multiFaceLandmarks?.length) return;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
 
-    if (!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
+    const nose = res.multiFaceLandmarks[0][1];
 
-    const lm = res.multiFaceLandmarks[0];
-    const nose = lm[1];
+    const nx = nose.x;
+    const ny = nose.y;
 
-    // ===== SMOOTHING =====
-    smoothNose.x = smoothNose.x * SMOOTHING + nose.x * (1 - SMOOTHING);
-    smoothNose.y = smoothNose.y * SMOOTHING + nose.y * (1 - SMOOTHING);
+    let zone = 'center';
 
-    // ===== POZYCJA ZERO =====
-    if (!neutral) {
-        neutral = { x: smoothNose.x, y: smoothNose.y };
-    }
+    if (nx < ZONE.LEFT) zone = 'left';
+    else if (nx > ZONE.RIGHT) zone = 'right';
+    else if (ny < ZONE.UP2) zone = 'up2';
+    else if (ny < ZONE.UP1) zone = 'up1';
 
-    const dx = smoothNose.x - neutral.x;
-    const dy = smoothNose.y - neutral.y;
-
-    let move = 'center';
-
-    // ===== MARTWA STREFA =====
-    if (dy < -DEADZONE_Y_UP) move = 'up';
-    else if (dy > DEADZONE_Y_DOWN) move = 'down';
-    else if (dx > DEADZONE_X) move = 'left';
-    else if (dx < -DEADZONE_X) move = 'right';
-
-    if (move !== 'center' && move === state.dir) {
+    if (zone !== 'center' && zone === state.dir) {
         state.dwell++;
     } else {
         state.dwell = 0;
-        state.dir = move;
+        state.dir = zone;
     }
 
     if (state.dwell >= DWELL_REQ) {
-        execute(move);
+        execute(zone);
         state.dwell = 0;
     }
 
-    drawOverlay(neutral, smoothNose);
-    updateUI(move);
+    drawZones();
+    drawNose(nose);
+    updateUI(zone);
 });
 
+/* ======================================================
+   UI
+====================================================== */
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
     document.querySelectorAll('.progress:not(.auto-progress-bar)')
@@ -186,74 +202,46 @@ function updateUI(move) {
     if (state.view === 'alpha') {
         document.getElementById('cur-let').innerText = letters[state.alphaIdx];
         document.getElementById('sentence').innerText = state.sentence || "---";
-        const autoBarAlpha = document.getElementById('auto-letter-bar-alpha');
-        if (autoBarAlpha)
-            autoBarAlpha.style.width =
-                state.entryTime < START_DELAY ? '0%' :
-                (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
-    }
-
-    if (state.view === 'needs') {
-        const autoBarNeeds = document.getElementById('auto-letter-bar-needs');
-        if (autoBarNeeds)
-            autoBarNeeds.style.width =
-                state.entryTime < START_DELAY ? '0%' :
-                (alphaTimer / CHANGE_TIME_NEEDS) * 100 + '%';
     }
 }
 
-/* ================= GŁÓWNY TIMER ================= */
-setInterval(() => {
-    if (state.view !== 'alpha' && state.view !== 'needs') return;
-    if (state.entryTime < START_DELAY) {
-        state.entryTime++;
-        return;
-    }
-    if (state.dir !== 'center') return;
-
-    alphaTimer++;
-    const limit = state.view === 'alpha'
-        ? CHANGE_TIME_ALPHA
-        : CHANGE_TIME_NEEDS;
-
-    if (alphaTimer >= limit) {
-        alphaTimer = 0;
-        if (state.view === 'alpha')
-            state.alphaIdx = (state.alphaIdx + 1) % letters.length;
-        if (state.view === 'needs') {
-            state.needIdx = (state.needIdx + 1) % needs.length;
-            highlightNeed();
-        }
-    }
-}, 100);
-
-/* ================= OVERLAY NA KAMERZE ================= */
-function drawOverlay(neutral, nose) {
-    if (!neutral) return;
-
-    const cx = neutral.x * canvas.width;
-    const cy = neutral.y * canvas.height;
-    const nx = nose.x * canvas.width;
-    const ny = nose.y * canvas.height;
-
-    ctx.strokeStyle = 'rgba(56,189,248,0.8)';
+/* ======================================================
+   RYSOWANIE STREF
+====================================================== */
+function drawZones() {
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
-    ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(239,68,68,0.8)';
+    [ZONE.LEFT, ZONE.RIGHT].forEach(x => {
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * x, 0);
+        ctx.lineTo(canvas.width * x, canvas.height);
+        ctx.stroke();
+    });
+
+    [ZONE.UP1, ZONE.UP2].forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height * y);
+        ctx.lineTo(canvas.width, canvas.height * y);
+        ctx.stroke();
+    });
+}
+
+function drawNose(nose) {
+    const x = nose.x * canvas.width;
+    const y = nose.y * canvas.height;
+
+    ctx.strokeStyle = 'red';
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(nx, ny);
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
     ctx.stroke();
 }
 
-/* ================= START KAMERY ================= */
+/* ======================================================
+   KAMERA
+====================================================== */
 const camera = new Camera(video, {
-    onFrame: async () => {
-        await faceMesh.send({ image: video });
-    },
+    onFrame: async () => await faceMesh.send({ image: video }),
     width: 640,
     height: 480
 });
