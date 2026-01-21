@@ -1,4 +1,16 @@
 /* ======================================================
+   STREFY (SKORYGOWANE)
+====================================================== */
+const ZONE = {
+    LEFT: 0.35,
+    RIGHT: 0.65,
+    UP1: 0.45,   // było 0.40
+    UP2: 0.32    // było 0.25
+};
+
+const DWELL_REQ = 20;
+
+/* ======================================================
    DANE
 ====================================================== */
 const letters = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", " ", "<-"];
@@ -16,29 +28,11 @@ let state = {
     dwell: 0,
     sentence: "",
     alphaIdx: 0,
-    needIdx: 0,
-    entryTime: 0
-};
-
-let alphaTimer = 0;
-
-const START_DELAY = 60;
-const CHANGE_TIME_ALPHA = 15;
-const CHANGE_TIME_NEEDS = 40;
-const DWELL_REQ = 20;
-
-/* ======================================================
-   STREFY STEROWANIA (LINIE)
-====================================================== */
-const ZONE = {
-    LEFT: 0.35,
-    RIGHT: 0.65,
-    UP1: 0.40,
-    UP2: 0.25
+    needIdx: 0
 };
 
 /* ======================================================
-   AUDIO ALARM
+   ALARM
 ====================================================== */
 function playAlarm() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -46,11 +40,9 @@ function playAlarm() {
     const gain = ctx.createGain();
 
     osc.type = 'square';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+    osc.frequency.value = 880;
 
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
+    gain.gain.value = 0.1;
 
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -77,8 +69,7 @@ initNeeds();
 
 function highlightNeed() {
     document.querySelectorAll('.need-item').forEach(e => e.classList.remove('active'));
-    const el = document.getElementById(`n-${state.needIdx}`);
-    if (el) el.classList.add('active');
+    document.getElementById(`n-${state.needIdx}`)?.classList.add('active');
 }
 
 /* ======================================================
@@ -87,13 +78,9 @@ function highlightNeed() {
 function setView(v) {
     document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
     document.getElementById(`view-${v}`).classList.add('active');
-
     state.view = v;
     state.dir = 'center';
     state.dwell = 0;
-    state.entryTime = 0;
-    alphaTimer = 0;
-
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
     if (v === 'needs') highlightNeed();
 }
@@ -102,6 +89,8 @@ function setView(v) {
    AKCJE
 ====================================================== */
 function execute(dir) {
+
+    /* MENU */
     if (state.view === 'menu') {
         if (dir === 'left') setView('alpha');
         if (dir === 'right') setView('needs');
@@ -111,22 +100,23 @@ function execute(dir) {
         }
     }
 
+    /* ALFABET */
     else if (state.view === 'alpha') {
         if (dir === 'left') state.sentence += letters[state.alphaIdx];
         if (dir === 'right') state.sentence = state.sentence.slice(0, -1);
         if (dir === 'up1') state.alphaIdx = (state.alphaIdx + 1) % letters.length;
         if (dir === 'up2') setView('menu');
+
+        document.getElementById('cur-let').innerText = letters[state.alphaIdx];
+        document.getElementById('sentence').innerText = state.sentence || "---";
     }
 
+    /* POTRZEBY */
     else if (state.view === 'needs') {
         if (dir === 'left') {
             document.getElementById('final-output').innerText =
                 "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
-        }
-        if (dir === 'right') {
-            state.needIdx = (state.needIdx + needs.length - 1) % needs.length;
-            highlightNeed();
         }
         if (dir === 'up1') {
             state.needIdx = (state.needIdx + 1) % needs.length;
@@ -147,21 +137,17 @@ const faceMesh = new FaceMesh({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
 
-faceMesh.setOptions({
-    maxNumFaces: 1,
-    refineLandmarks: true,
-    minDetectionConfidence: 0.5
-});
+faceMesh.setOptions({ maxNumFaces: 1 });
 
 faceMesh.onResults(res => {
     if (!res.image || !res.multiFaceLandmarks?.length) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
 
     const nose = res.multiFaceLandmarks[0][1];
 
-    const nx = nose.x;
+    /* ⬅⬅⬅ ODWÓCENIE LEWO/PRAWO */
+    const nx = 1 - nose.x;
     const ny = nose.y;
 
     let zone = 'center';
@@ -171,7 +157,7 @@ faceMesh.onResults(res => {
     else if (ny < ZONE.UP2) zone = 'up2';
     else if (ny < ZONE.UP1) zone = 'up1';
 
-    if (zone !== 'center' && zone === state.dir) {
+    if (zone === state.dir && zone !== 'center') {
         state.dwell++;
     } else {
         state.dwell = 0;
@@ -184,32 +170,25 @@ faceMesh.onResults(res => {
     }
 
     drawZones();
-    drawNose(nose);
-    updateUI(zone);
+    drawNose(nx, ny);
+    updateBars(zone);
 });
 
 /* ======================================================
-   UI
+   PASKI POSTĘPU (NAPRAWIONE)
 ====================================================== */
-function updateUI(move) {
-    const p = (state.dwell / DWELL_REQ) * 100;
-    document.querySelectorAll('.progress:not(.auto-progress-bar)')
-        .forEach(b => b.style.width = '0%');
+function updateBars(dir) {
+    document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
 
-    const bar = document.getElementById(`bar-${move}-${state.view}`);
-    if (bar) bar.style.width = p + '%';
-
-    if (state.view === 'alpha') {
-        document.getElementById('cur-let').innerText = letters[state.alphaIdx];
-        document.getElementById('sentence').innerText = state.sentence || "---";
-    }
+    const bar = document.getElementById(`bar-${dir}-${state.view}`);
+    if (bar) bar.style.width = (state.dwell / DWELL_REQ * 100) + '%';
 }
 
 /* ======================================================
    RYSOWANIE STREF
 ====================================================== */
 function drawZones() {
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
     ctx.lineWidth = 2;
 
     [ZONE.LEFT, ZONE.RIGHT].forEach(x => {
@@ -227,13 +206,10 @@ function drawZones() {
     });
 }
 
-function drawNose(nose) {
-    const x = nose.x * canvas.width;
-    const y = nose.y * canvas.height;
-
+function drawNose(x, y) {
     ctx.strokeStyle = 'red';
     ctx.beginPath();
-    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.arc(x * canvas.width, y * canvas.height, 6, 0, Math.PI * 2);
     ctx.stroke();
 }
 
