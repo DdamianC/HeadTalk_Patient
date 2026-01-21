@@ -1,5 +1,5 @@
 /* ======================================================
-   STREFY (USTAWIENIA)
+   STREFY (SKORYGOWANE)
 ====================================================== */
 const ZONE = {
     LEFT: 0.35,
@@ -33,7 +33,7 @@ let state = {
 
 /* ======================================================
    ALARM
-====================================================== */
+===================================================== */
 function playAlarm() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
@@ -41,6 +41,7 @@ function playAlarm() {
 
     osc.type = 'square';
     osc.frequency.value = 880;
+
     gain.gain.value = 0.1;
 
     osc.connect(gain);
@@ -84,34 +85,42 @@ function setView(v) {
     state.dir = 'center';
     state.dwell = 0;
     
+    // Resetuj wszystkie paski przy zmianie widoku
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+    
     if (v === 'needs') highlightNeed();
 }
 
 /* ======================================================
-   AKCJE
+   AKCJE (POPRAWIONA LOGIKA STRON)
 ====================================================== */
 function execute(dir) {
+    /* MENU */
     if (state.view === 'menu') {
-        if (dir === 'right') setView('needs');
-        if (dir === 'left') setView('alpha');
+        if (dir === 'right') setView('needs'); // Ruch w prawo -> Potrzeby
+        if (dir === 'left') setView('alpha');  // Ruch w lewo -> Alfabet
         if (dir === 'up2') {
             document.getElementById('final-output').innerText = "!!! ALARM !!!";
             playAlarm();
         }
     }
+
+    /* ALFABET */
     else if (state.view === 'alpha') {
-        if (dir === 'right') state.sentence += letters[state.alphaIdx];
-        if (dir === 'left') state.sentence = state.sentence.slice(0, -1);
+        if (dir === 'right') state.sentence += letters[state.alphaIdx]; // Prawa dodaje
+        if (dir === 'left') state.sentence = state.sentence.slice(0, -1); // Lewa usuwa
         if (dir === 'up1') state.alphaIdx = (state.alphaIdx + 1) % letters.length;
         if (dir === 'up2') setView('menu');
 
         document.getElementById('cur-let').innerText = letters[state.alphaIdx];
         document.getElementById('sentence').innerText = state.sentence || "---";
     }
+
+    /* POTRZEBY */
     else if (state.view === 'needs') {
-        if (dir === 'right') {
-            document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
+        if (dir === 'right') { // Prawa wybiera potrzebę
+            document.getElementById('final-output').innerText =
+                "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
         if (dir === 'up1') {
@@ -123,7 +132,7 @@ function execute(dir) {
 }
 
 /* ======================================================
-   FACE MESH & RYSOWANIE
+   FACE MESH
 ====================================================== */
 const video = document.getElementById('video');
 const canvas = document.getElementById('cameraCanvas');
@@ -138,18 +147,23 @@ faceMesh.setOptions({ maxNumFaces: 1 });
 faceMesh.onResults(res => {
     if (!res.image || !res.multiFaceLandmarks?.length) return;
 
-    // Rysowanie lustrzanego tła
     ctx.save();
-    ctx.translate(canvas.width, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Rysowanie lustrzanego odbicia wideo
     ctx.scale(-1, 1);
+    ctx.translate(-canvas.width, 0);
     ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
     ctx.restore();
 
     const nose = res.multiFaceLandmarks[0][1];
-    const nx = nose.x; 
+
+    /* LOGIKA STEROWANIA (Zsynchronizowana z widokiem użytkownika) */
+    const nx = nose.x; // Bez odwracania nx, bo rysujemy lustrzanie
     const ny = nose.y;
 
     let zone = 'center';
+
+    // Progi dopasowane do lustrzanego odbicia (Ruch w prawo użytkownika = mniejsze X na sensorze)
     if (nx > ZONE.RIGHT) zone = 'left';
     else if (nx < ZONE.LEFT) zone = 'right';
     else if (ny < ZONE.UP2) zone = 'up2';
@@ -168,80 +182,90 @@ faceMesh.onResults(res => {
     }
 
     drawZones();
-    drawNose(nx, ny); // nx i ny są już w układzie Mediapipe (0-1)
+    // Nos rysujemy na nx,ny (Mediapipe używa 0-1)
+    drawNose(nx, ny);
     updateBars(zone);
 });
 
 /* ======================================================
-   PASKI POSTĘPU (OBSŁUGA WSZYSTKICH WIDOKÓW)
+   PASKI POSTĘPU (POPRAWIONE WYŚWIETLANIE)
 ====================================================== */
 function updateBars(dir) {
+    // Ukryj wszystkie paski postępu
     document.querySelectorAll('.progress').forEach(b => b.style.width = '0%');
+
     if (dir === 'center') return;
 
-    const progressPercent = (state.dwell / DWELL_REQ * 100) + '%';
-
-    // 1. Pasek wewnątrz aktualnego widoku (Alfabet/Potrzeby/Menu)
+    // Szukaj paska w aktualnym widoku
     const currentViewEl = document.getElementById(`view-${state.view}`);
-    const localBar = currentViewEl?.querySelector(`.progress-bar-${dir} .progress`);
-    if (localBar) localBar.style.width = progressPercent;
-
-    // 2. Specjalna obsługa paska Alarmu (jeśli jest poza głównym kontenerem widoku)
-    const alarmBar = document.querySelector('.progress-bar-up2 .progress');
-    if (state.view === 'menu' && dir === 'up2' && alarmBar) {
-        alarmBar.style.width = progressPercent;
+    if (currentViewEl) {
+        const bar = currentViewEl.querySelector(`.progress-bar-${dir} .progress`);
+        if (bar) {
+            bar.style.width = (state.dwell / DWELL_REQ * 100) + '%';
+        }
+    }
+    
+    // Specjalna obsługa paska Alarmu (zawsze dostępny w menu jako UP2)
+    if (state.view === 'menu' && dir === 'up2') {
+        const alarmBar = document.querySelector('.progress-bar-up2 .progress');
+        if (alarmBar) alarmBar.style.width = (state.dwell / DWELL_REQ * 100) + '%';
     }
 }
 
 /* ======================================================
-   ESTETYKA KAMERY
+   RYSOWANIE STREF (ESTETYCZNE - KOLOROWE)
 ====================================================== */
 function drawZones() {
-    // Bardzo mała przezroczystość (0.07 zamiast 0.15)
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
 
-    // UP2 - Alarm / Powrót (Czerwony)
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.07)';
+    // Strefa GÓRNA 2 (ALARM/MENU - Czerwona)
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
     ctx.fillRect(0, 0, canvas.width, canvas.height * ZONE.UP2);
     
-    // LEFT - Alfabet / Usuń / Wybierz (Zielony)
-    ctx.fillStyle = 'rgba(0, 255, 0, 0.07)';
+    // Strefa LEWA (Zielona)
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
     ctx.fillRect(canvas.width * ZONE.RIGHT, canvas.height * ZONE.UP1, canvas.width * (1-ZONE.RIGHT), canvas.height);
 
-    // RIGHT - Potrzeby / Dodaj (Brązowy)
-    ctx.fillStyle = 'rgba(139, 69, 19, 0.07)';
+    // Strefa PRAWA (Brązowa/Pomarańczowa)
+    ctx.fillStyle = 'rgba(139, 69, 19, 0.15)';
     ctx.fillRect(0, canvas.height * ZONE.UP1, canvas.width * ZONE.LEFT, canvas.height);
 
-    // Linie siatki (przerywane)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.setLineDash([5, 10]);
+    // Linie siatki
+    ctx.strokeStyle = 'white';
+    ctx.setLineDash([5, 5]);
     
     [ZONE.LEFT, ZONE.RIGHT].forEach(x => {
-        ctx.beginPath(); ctx.moveTo(canvas.width * x, 0); ctx.lineTo(canvas.width * x, canvas.height); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * x, 0);
+        ctx.lineTo(canvas.width * x, canvas.height);
+        ctx.stroke();
     });
+
     [ZONE.UP1, ZONE.UP2].forEach(y => {
-        ctx.beginPath(); ctx.moveTo(0, canvas.height * y); ctx.lineTo(canvas.width, canvas.height * y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height * y);
+        ctx.lineTo(canvas.width, canvas.height * y);
+        ctx.stroke();
     });
     ctx.setLineDash([]);
 }
 
 function drawNose(x, y) {
-    // x jest z Mediapipe (0=lewo, 1=prawo). 
-    // Ponieważ obraz tła jest odbity lustrzanie, kropka musi być na (1-x)
+    // Odwracamy X tylko do rysowania kropki, by trafiała w nos na lustrzanym odbiciu
     const drawX = (1 - x) * canvas.width;
     const drawY = y * canvas.height;
     
-    ctx.fillStyle = '#ff0000';
-    ctx.shadowBlur = 5;
+    ctx.fillStyle = 'red';
+    ctx.shadowBlur = 10;
     ctx.shadowColor = "red";
     ctx.beginPath();
-    ctx.arc(drawX, drawY, 7, 0, Math.PI * 2);
+    ctx.arc(drawX, drawY, 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 }
 
 /* ======================================================
-   KAMERA START
+   KAMERA
 ====================================================== */
 const camera = new Camera(video, {
     onFrame: async () => await faceMesh.send({ image: video }),
