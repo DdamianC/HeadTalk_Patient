@@ -20,17 +20,26 @@ let state = {
 let alphaTimer = 0;
 
 const START_DELAY = 60;
-const CHANGE_TIME_ALPHA = 15;  // 1.5s
-const CHANGE_TIME_NEEDS = 40;  // 4s
-const DWELL_REQ = 20; 
+const CHANGE_TIME_ALPHA = 15;
+const CHANGE_TIME_NEEDS = 40;
+const DWELL_REQ = 20;
+
+/* ===== DODANE: stabilizacja sterowania ===== */
+const SMOOTHING = 0.7;
+const DEADZONE_X = 0.015;
+const DEADZONE_Y_UP = 0.06;
+const DEADZONE_Y_DOWN = 0.10;
+
+let neutral = null;
+let smoothNose = { x: 0, y: 0 };
 
 /* ================= AUDIO ALARM ================= */
 function playAlarm() {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-    oscillator.type = 'square'; 
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
@@ -98,7 +107,8 @@ function execute(dir) {
     else if (state.view === 'needs') {
         if (dir === 'up') setView('menu');
         if (dir === 'left') {
-            document.getElementById('final-output').innerText = "POTRZEBA: " + needs[state.needIdx].t;
+            document.getElementById('final-output').innerText =
+                "POTRZEBA: " + needs[state.needIdx].t;
             setView('menu');
         }
     }
@@ -128,18 +138,26 @@ faceMesh.onResults(res => {
 
     const lm = res.multiFaceLandmarks[0];
     const nose = lm[1];
-    const forehead = lm[10];
-    const leftFaceEdge = lm[234];
-    const rightFaceEdge = lm[454];
+
+    // ===== SMOOTHING =====
+    smoothNose.x = smoothNose.x * SMOOTHING + nose.x * (1 - SMOOTHING);
+    smoothNose.y = smoothNose.y * SMOOTHING + nose.y * (1 - SMOOTHING);
+
+    // ===== POZYCJA ZERO =====
+    if (!neutral) {
+        neutral = { x: smoothNose.x, y: smoothNose.y };
+    }
+
+    const dx = smoothNose.x - neutral.x;
+    const dy = smoothNose.y - neutral.y;
 
     let move = 'center';
-    const faceCenterX = (leftFaceEdge.x + rightFaceEdge.x) / 2;
 
-    // KALIBRACJA CZUŁOŚCI
-    if (nose.y < forehead.y + 0.05) move = 'up';
-    else if (nose.y > forehead.y + 0.15) move = 'down';
-    else if (nose.x > faceCenterX + 0.012) move = 'left'; 
-    else if (nose.x < faceCenterX - 0.012) move = 'right';
+    // ===== MARTWA STREFA =====
+    if (dy < -DEADZONE_Y_UP) move = 'up';
+    else if (dy > DEADZONE_Y_DOWN) move = 'down';
+    else if (dx > DEADZONE_X) move = 'left';
+    else if (dx < -DEADZONE_X) move = 'right';
 
     if (move !== 'center' && move === state.dir) {
         state.dwell++;
@@ -152,13 +170,16 @@ faceMesh.onResults(res => {
         execute(move);
         state.dwell = 0;
     }
+
+    drawOverlay(neutral, smoothNose);
     updateUI(move);
 });
 
 function updateUI(move) {
     const p = (state.dwell / DWELL_REQ) * 100;
-    document.querySelectorAll('.progress:not(.auto-progress-bar)').forEach(b => b.style.width = '0%');
-    
+    document.querySelectorAll('.progress:not(.auto-progress-bar)')
+        .forEach(b => b.style.width = '0%');
+
     const bar = document.getElementById(`bar-${move}-${state.view}`);
     if (bar) bar.style.width = p + '%';
 
@@ -166,12 +187,18 @@ function updateUI(move) {
         document.getElementById('cur-let').innerText = letters[state.alphaIdx];
         document.getElementById('sentence').innerText = state.sentence || "---";
         const autoBarAlpha = document.getElementById('auto-letter-bar-alpha');
-        if (autoBarAlpha) autoBarAlpha.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
+        if (autoBarAlpha)
+            autoBarAlpha.style.width =
+                state.entryTime < START_DELAY ? '0%' :
+                (alphaTimer / CHANGE_TIME_ALPHA) * 100 + '%';
     }
 
     if (state.view === 'needs') {
         const autoBarNeeds = document.getElementById('auto-letter-bar-needs');
-        if (autoBarNeeds) autoBarNeeds.style.width = state.entryTime < START_DELAY ? '0%' : (alphaTimer / CHANGE_TIME_NEEDS) * 100 + '%';
+        if (autoBarNeeds)
+            autoBarNeeds.style.width =
+                state.entryTime < START_DELAY ? '0%' :
+                (alphaTimer / CHANGE_TIME_NEEDS) * 100 + '%';
     }
 }
 
@@ -182,14 +209,17 @@ setInterval(() => {
         state.entryTime++;
         return;
     }
-    if (state.dir !== 'center') return; // Zamrażanie czasu podczas ruchu głową
+    if (state.dir !== 'center') return;
 
     alphaTimer++;
-    const currentLimit = (state.view === 'alpha') ? CHANGE_TIME_ALPHA : CHANGE_TIME_NEEDS;
-    
-    if (alphaTimer >= currentLimit) {
+    const limit = state.view === 'alpha'
+        ? CHANGE_TIME_ALPHA
+        : CHANGE_TIME_NEEDS;
+
+    if (alphaTimer >= limit) {
         alphaTimer = 0;
-        if (state.view === 'alpha') state.alphaIdx = (state.alphaIdx + 1) % letters.length;
+        if (state.view === 'alpha')
+            state.alphaIdx = (state.alphaIdx + 1) % letters.length;
         if (state.view === 'needs') {
             state.needIdx = (state.needIdx + 1) % needs.length;
             highlightNeed();
@@ -197,10 +227,32 @@ setInterval(() => {
     }
 }, 100);
 
+/* ================= OVERLAY NA KAMERZE ================= */
+function drawOverlay(neutral, nose) {
+    if (!neutral) return;
+
+    const cx = neutral.x * canvas.width;
+    const cy = neutral.y * canvas.height;
+    const nx = nose.x * canvas.width;
+    const ny = nose.y * canvas.height;
+
+    ctx.strokeStyle = 'rgba(56,189,248,0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(239,68,68,0.8)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(nx, ny);
+    ctx.stroke();
+}
+
 /* ================= START KAMERY ================= */
 const camera = new Camera(video, {
     onFrame: async () => {
-        await faceMesh.send({image: video});
+        await faceMesh.send({ image: video });
     },
     width: 640,
     height: 480
